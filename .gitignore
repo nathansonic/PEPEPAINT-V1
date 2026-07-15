@@ -1,0 +1,25 @@
+# macOS metadata
+.DS_Store
+**/.DS_Store
+
+# Editor settings
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Logs and temporary files
+*.log
+*.tmp
+tmp/
+
+# Node.js dependencies and output (for the planned backend)
+node_modules/
+coverage/
+dist/
+
