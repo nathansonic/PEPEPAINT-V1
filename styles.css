@@ -34,6 +34,24 @@ body::-webkit-scrollbar {
 	height: 0;
 }
 
+#nav_container {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 400px;
+	height: 560px;
+	z-index: 9999;
+	display: flex;
+	flex-flow: column nowrap;
+	font-size: 0.7em;
+	pointer-events: none;
+}
+
+#nav_container .controller {
+	pointer-events: auto;
+}
+
 #nav-bar {
 	position: absolute;
 	top: 26px;
@@ -44,10 +62,9 @@ body::-webkit-scrollbar {
 	flex-flow: row nowrap;
 	justify-content: center;
 	align-items: center;
-	z-index: 99999999999999;
 }
 
-#nav {
+#header {
 	position: absolute;
 	top: 26px;
 	left: 0;
@@ -58,21 +75,15 @@ body::-webkit-scrollbar {
 	justify-content: space-between;
 	align-items: center;
 	padding: 0 34px;
-	z-index: 99999999999999;
 }
 
-#nav_title {
+#header_title {
 	font-family: "unscii8", monospace;
 	font-size: 1.3em;
 }
 
-.nav_item {
+.header_item {
 	padding: 0 4px;
-}
-
-#nav_address {
-	width: 50px;
-	overflow: hidden;
 }
 
 #button_container {
@@ -83,7 +94,7 @@ body::-webkit-scrollbar {
 	width: 100px;
 }
 
-.nav_button {
+.header_button {
 	font-family: "unscii8", monospace;
 	height: 24px;
 	background-color: #ffffff;
@@ -96,7 +107,7 @@ body::-webkit-scrollbar {
 	cursor: pointer;
 }
 
-.nav_button svg {
+.header_button svg {
 	display: block;
 }
 
@@ -190,12 +201,12 @@ body::-webkit-scrollbar {
 	transform: translate(-50%, -50%);
 	width: 400px;
 	height: 560px;
-	border: 1px solid grey;
 	overflow: hidden;
 	touch-action: none;
 	-webkit-user-select: none;
 	user-select: none;
 	-webkit-touch-callout: none;
+	z-index: 1;
 }
 
 #preview_canvas,

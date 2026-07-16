@@ -8,51 +8,47 @@
 	</head>
 
 	<body id="body">
-		<!-- CANVASES -->
-		<div class="canvas-container" id="canvas_container">
-			<div id="nav">
-				<div class="nav_item" id="nav_title">PEPEPAINT</div>
-				<div class="nav_item" id="gallery_button">
+		<!-- NAV -->
+		<div class="nav-container" id="nav_container">
+			<div id="header">
+				<div class="header_item" id="header_title">PEPEPAINT</div>
+				<div class="header_item controller" id="gallery_button">
 					<a href="https://objkt.com/collections/KT1Hk63AQL4VY63dCREX6DZtv5k3GnTtUXxk" target="_blank">gallery</a>
 				</div>
-				<button class="nav_button" id="submission_button">Submit</button>
+				<button class="header_button controller" id="submission_button">Submit</button>
 			</div>
 
 			<div class="size-bar">
 				<!-- SIZE -->
 				<div class="menu_row">
 					<div class="menu_control_title">Size</div>
-					<div class="controls range_and_number">
-						<div class="menu_range_input_container">
-							<input
-								name="brush_w"
-								id="brush_w_input_range"
-								type="range"
-								min="1"
-								max="560"
-								value="50"
-								class="controller brush_controller input_range slider_small"
-								data-type="brush_dim" />
-						</div>
+					<div class="menu_range_input_container">
+						<input
+							name="brush_w"
+							id="brush_w_input_range"
+							type="range"
+							min="1"
+							max="560"
+							value="50"
+							class="controller brush_controller input_range slider_small"
+							data-type="brush_dim" />
 					</div>
 				</div>
 
 				<!-- OPACITY -->
 				<div class="menu_row">
 					<div class="menu_control_title">Opacity</div>
-					<div class="controls range_and_number">
-						<div class="menu_range_input_container">
-							<input
-								name="image_opacity"
-								id="image_opacity_input_range"
-								type="range"
-								min="0"
-								max="100"
-								value="100"
-								class="controller brush_controller input_range slider"
-								data-type="image"
-								data-controller="image_opacity" />
-						</div>
+					<div class="menu_range_input_container">
+						<input
+							name="image_opacity"
+							id="image_opacity_input_range"
+							type="range"
+							min="0"
+							max="100"
+							value="100"
+							class="controller brush_controller input_range slider"
+							data-type="image"
+							data-controller="image_opacity" />
 					</div>
 				</div>
 			</div>
@@ -64,16 +60,20 @@
 						<div id="image_brush_controls" class="controls"></div>
 					</div>
 					<div class="info_row">1-9 = fx, q-p = filters,</div>
+					<div class="info_row">c,g,j = animated filters</div>
 				</div>
 			</div>
 
 			<div class="fx-bar">
 				<div class="palette_row">
-					<div class="info_row">z/x = undo/redo, s = save, a = rand, h = hide controls</div>
+					<div class="info_row">z/x = undo/redo, s = save static, 0 = save animated, a = rand, h = hide controls</div>
 					<div class="info_row">n/m = size, v/b = rotate, k/l = hold, d/f = flip</div>
 				</div>
 			</div>
+		</div>
 
+		<!-- CANVASES -->
+		<div class="canvas-container" id="canvas_container">
 			<canvas id="draw_canvas" class="drawing_canvas" width="400" height="560"></canvas>
 			<canvas id="preview_canvas" width="400" height="560"></canvas>
 		</div>

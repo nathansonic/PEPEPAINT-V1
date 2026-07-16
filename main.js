@@ -1069,8 +1069,8 @@ let y_hold = 0;
 
 // Increment
 let increment_on = false;
-let auto_inc_x_amount = 1;
-let auto_inc_y_amount = 1;
+let auto_inc_x_amount = 2;
+let auto_inc_y_amount = 2;
 let auto_inc_x_running = 0;
 let auto_inc_y_running = 0;
 let increment_screen_wrap_on = true;
@@ -1356,6 +1356,10 @@ function shouldIgnoreKeyboardShortcut(event) {
 		return false;
 	}
 
+	if (activeElement.closest?.("#nav_container")) {
+		return false;
+	}
+
 	if (activeElement.isContentEditable) {
 		return true;
 	}
@@ -1401,7 +1405,7 @@ document.addEventListener("keydown", (e) => {
 });
 
 function toggleControlsVisibility() {
-	document.querySelectorAll("#nav, .size-bar, .palette-bar, .fx-bar").forEach((bar) => {
+	document.querySelectorAll("#nav_container").forEach((bar) => {
 		bar.classList.toggle("hidden");
 	});
 }
@@ -1760,7 +1764,7 @@ for (let i = 0; i < image_brush_array.length; i++) {
 
 	// create html controllers
 	let image_controller = `<input type="radio" name="brush_shape" id="image_brush_${i}" class="controller brush_controller hidden_radio" data-type="image" data-controller="image_brush_shape" data-image_index="${i}"/>
-      <label for="image_brush_${i}" class="color_box" style="background-image: url('brushes/${image_name}.png'); background-position: center; background-repeat: no-repeat; background-size: cover;"></label>`;
+      <label for="image_brush_${i}" class="controller color_box" style="background-image: url('brushes/${image_name}.png'); background-position: center; background-repeat: no-repeat; background-size: cover;"></label>`;
 
 	document.getElementById("image_brush_controls").insertAdjacentHTML("beforeend", image_controller);
 
