@@ -1,0 +1,54 @@
+name: Deploy PEPEPAINT
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pepepaint-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy static site
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://pepepaint.journeypaint.fun
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure deployment SSH key
+        env:
+          DEPLOY_KEY: ${{ secrets.PEPEPAINT_DEPLOY_KEY }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/pepepaint_deploy
+          chmod 600 ~/.ssh/pepepaint_deploy
+          printf '%s\n' \
+            '87.106.69.245 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPSABAe5Dc1z0tInU5n26EjgbuYd2xGGFxxMsWIqo71v' \
+            > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Deploy production files
+        run: |
+          rsync -az --delete \
+            --include='/index.html' \
+            --include='/main.js' \
+            --include='/filters.js' \
+            --include='/styles.css' \
+            --include='/brushes/***' \
+            --include='/fonts/***' \
+            --exclude='*' \
+            -e 'ssh -i ~/.ssh/pepepaint_deploy -o IdentitiesOnly=yes' \
+            ./ pepepaint-deploy@87.106.69.245:/var/www/pepepaint/current/
+
+      - name: Verify live deployment
+        run: curl --fail --silent --show-error --retry 5 --retry-delay 2 https://pepepaint.journeypaint.fun/ > /dev/null
