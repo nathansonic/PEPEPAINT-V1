@@ -8,105 +8,119 @@
 	</head>
 
 	<body id="body">
-		<!-- NAV -->
-		<div class="nav-container" id="nav_container">
-			<div id="header">
-				<div class="header_item" id="header_title">PEPEPAINT</div>
-				<div class="header_item controller" id="gallery_button">
-					<a href="https://objkt.com/collections/KT1Hk63AQL4VY63dCREX6DZtv5k3GnTtUXxk" target="_blank">gallery</a>
+		<div id="card">
+			<!-- NAV -->
+			<div class="nav-container" id="nav_container">
+				<div id="header">
+					<div class="header_item" id="header_title">PEPEPAINT</div>
+					<div class="header_item controller" id="gallery_button">
+						<a href="https://objkt.com/collections/KT1Hk63AQL4VY63dCREX6DZtv5k3GnTtUXxk" target="_blank">gallery</a>
+					</div>
+					<button class="header_button controller" id="submission_button">Submit</button>
 				</div>
-				<button class="header_button controller" id="submission_button">Submit</button>
-			</div>
 
-			<div class="size-bar">
-				<!-- SIZE -->
-				<div class="menu_row">
-					<div class="menu_control_title">Size</div>
-					<div class="menu_range_input_container">
-						<input
-							name="brush_w"
-							id="brush_w_input_range"
-							type="range"
-							min="1"
-							max="560"
-							value="50"
-							class="controller brush_controller input_range slider_small"
-							data-type="brush_dim" />
+				<div class="fx-bar">
+					<div class="fx_row">
+						<div class="info_row">h = hide controls</div>
+						<div class="info_row">1-9 = fx</div>
+						<div class="info_row">0 = rand</div>
+						<div class="info_row">q-p = filters</div>
+						<div class="info_row">j/k/l = animated filters</div>
+						<div class="info_row">z/x = undo/redo</div>
+						<div class="info_row">s = save png/gif</div>
+						<div class="info_row">n/m = size</div>
+						<div class="info_row">d/c = rotate</div>
+						<div class="info_row">f/v = hold</div>
+						<div class="info_row">g/b = flip</div>
 					</div>
 				</div>
 
-				<!-- OPACITY -->
-				<div class="menu_row">
-					<div class="menu_control_title">Opacity</div>
-					<div class="menu_range_input_container">
-						<input
-							name="image_opacity"
-							id="image_opacity_input_range"
-							type="range"
-							min="0"
-							max="100"
-							value="100"
-							class="controller brush_controller input_range slider"
-							data-type="image"
-							data-controller="image_opacity" />
+				<div class="size-bar">
+					<!-- SIZE -->
+					<div class="menu_row">
+						<div class="menu_control_title">Size</div>
+						<div class="menu_range_input_container">
+							<input
+								name="brush_w"
+								id="brush_w_input_range"
+								type="range"
+								min="1"
+								max="560"
+								value="50"
+								class="controller brush_controller input_range slider_small"
+								data-type="brush_dim" />
+						</div>
 					</div>
+
+					<!-- OPACITY -->
+					<div class="menu_row">
+						<div class="menu_control_title">Opacity</div>
+						<div class="menu_range_input_container">
+							<input
+								name="image_opacity"
+								id="image_opacity_input_range"
+								type="range"
+								min="0"
+								max="100"
+								value="100"
+								class="controller brush_controller input_range slider"
+								data-type="image"
+								data-controller="image_opacity" />
+						</div>
+					</div>
+				</div>
+
+				<div class="palette-bar">
+					<!-- BRUSHES -->
+					<div class="palette_row">
+						<div class="paint_controls_section">
+							<div id="image_brush_controls" class="controls"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="feedback-bar">
+					<div class="feedback_row">Hello: world</div>
 				</div>
 			</div>
 
-			<div class="palette-bar">
-				<!-- BRUSHES -->
-				<div class="palette_row">
-					<div class="paint_controls_section">
-						<div id="image_brush_controls" class="controls"></div>
-					</div>
-					<div class="info_row">1-9 = fx, q-p = filters,</div>
-					<div class="info_row">c,g,j = animated filters</div>
-				</div>
+			<!-- CANVASES -->
+			<div class="canvas-container" id="canvas_container">
+				<canvas id="draw_canvas" class="drawing_canvas" width="400" height="560"></canvas>
+				<canvas id="preview_canvas" width="400" height="560"></canvas>
 			</div>
 
-			<div class="fx-bar">
-				<div class="palette_row">
-					<div class="info_row">z/x = undo/redo, s = save static, 0 = save animated, a = rand, h = hide controls</div>
-					<div class="info_row">n/m = size, v/b = rotate, k/l = hold, d/f = flip</div>
-				</div>
-			</div>
+			<!-- SUBMISSIONS -->
+			<dialog id="submission_dialog" class="submission_dialog">
+				<form id="submission_form" class="submission_form">
+					<div class="submission_form_header">
+						<div id="submission_title">Submissions</div>
+						<button type="button" class="header_button submission_close_button" id="submission_close_button" aria-label="Close submission window">
+							x
+						</button>
+					</div>
+					<div>
+						<label class="submission_field">
+							<span>Title</span>
+							<input id="submission_title_input" name="title" type="text" maxlength="120" required />
+						</label>
+						<label class="submission_field">
+							<span>Description</span>
+							<textarea id="submission_description_input" name="description" maxlength="1000" rows="4"></textarea>
+						</label>
+						<label class="submission_field">
+							<span>Editions</span>
+							<input id="submission_editions_input" name="editions" type="number" min="1" max="10000" step="1" value="1" required />
+						</label>
+					</div>
+					<div class="submission_actions">
+						<button type="button" class="header_button" id="submission_cancel_button">Cancel</button>
+						<button type="submit" class="header_button" id="submission_submit_button">Submit</button>
+					</div>
+					<div id="submission_status" class="submission_status" role="status" aria-live="polite">Status: Fill in the form</div>
+				</form>
+			</dialog>
 		</div>
-
-		<!-- CANVASES -->
-		<div class="canvas-container" id="canvas_container">
-			<canvas id="draw_canvas" class="drawing_canvas" width="400" height="560"></canvas>
-			<canvas id="preview_canvas" width="400" height="560"></canvas>
-		</div>
-
-		<dialog id="submission_dialog" class="submission_dialog">
-			<form id="submission_form" class="submission_form">
-				<div class="submission_form_header">
-					<div id="submission_title">Submissions</div>
-					<button type="button" class="nav_button submission_close_button" id="submission_close_button" aria-label="Close submission window">
-						x
-					</button>
-				</div>
-				<div>
-					<label class="submission_field">
-						<span>Title</span>
-						<input id="submission_title_input" name="title" type="text" maxlength="120" required />
-					</label>
-					<label class="submission_field">
-						<span>Description</span>
-						<textarea id="submission_description_input" name="description" maxlength="1000" rows="4"></textarea>
-					</label>
-					<label class="submission_field">
-						<span>Editions</span>
-						<input id="submission_editions_input" name="editions" type="number" min="1" max="10000" step="1" value="1" required />
-					</label>
-				</div>
-				<div class="submission_actions">
-					<button type="button" class="nav_button" id="submission_cancel_button">Cancel</button>
-					<button type="submit" class="nav_button" id="submission_submit_button">Submit</button>
-				</div>
-				<div id="submission_status" class="submission_status" role="status" aria-live="polite">Status: Fill in the form</div>
-			</form>
-		</dialog>
 	</body>
 
 	<script type="module" src="main.js"></script>

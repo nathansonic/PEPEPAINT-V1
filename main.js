@@ -30,7 +30,7 @@ const submission_cancel_button = document.getElementById("submission_cancel_butt
 
 submission_button?.addEventListener("click", () => {
 	if (!submission_dialog.open) {
-		submission_dialog.showModal();
+		submission_dialog.show();
 	}
 });
 
@@ -962,6 +962,7 @@ let drawing_speed = 1;
 
 // Size
 let brush_size_automation_on = false;
+let brush_size_before_automation = null;
 let randomise_lock_width_and_height = true;
 let brush_width_random;
 let randomise_width = true;
@@ -999,6 +1000,32 @@ function syncBrushSizeInputs() {
 	if (brushSizeNumber) {
 		brushSizeNumber.value = brush_height;
 	}
+}
+
+function setBrushSizeAutomation(enabled) {
+	const next_state = Boolean(enabled);
+
+	if (next_state === brush_size_automation_on) {
+		return;
+	}
+
+	if (next_state) {
+		brush_size_before_automation = {
+			width: brush_width,
+			height: brush_height,
+			width_float: brush_width_float,
+			height_float: brush_height_float,
+		};
+	} else if (brush_size_before_automation) {
+		brush_width = brush_size_before_automation.width;
+		brush_height = brush_size_before_automation.height;
+		brush_width_float = brush_size_before_automation.width_float;
+		brush_height_float = brush_size_before_automation.height_float;
+		syncBrushSizeInputs();
+		brush_size_before_automation = null;
+	}
+
+	brush_size_automation_on = next_state;
 }
 
 function getActiveBrushAspectRatio() {
@@ -1301,7 +1328,7 @@ function randAll() {
 	image_index = getRandomInt(0, image_array.length - 1);
 
 	if (randomiser_behaviour_type_on) {
-		brush_size_automation_on = Math.random() < 0.2;
+		setBrushSizeAutomation(Math.random() < 0.2);
 		rotate_on = Math.random() < 0.2;
 		mirror_on = Math.random() < 0.2;
 		snap_on = Math.random() < 0.2;
@@ -1379,15 +1406,13 @@ document.addEventListener("keydown", (e) => {
 
 	if (e.key == "s") {
 		DownloadCanvasAsImage();
-	} else if (e.key === "a") {
-		randAll();
 	} else if (e.key == "n") {
 		stepBrushSize(-1);
 	} else if (e.key == "m") {
 		stepBrushSize(1);
-	} else if (e.key === "v") {
+	} else if (e.key === "d") {
 		stepManualRotate(-1);
-	} else if (e.key === "b") {
+	} else if (e.key === "c") {
 		stepManualRotate(1);
 	} else if (e.key == "k") {
 		is_x_holding = true;
@@ -1397,9 +1422,9 @@ document.addEventListener("keydown", (e) => {
 		layerUndo();
 	} else if (e.key === "x" && draw_canvas) {
 		layerRedo();
-	} else if (e.key === "d") {
-		flip_brush_h = true;
 	} else if (e.key === "f") {
+		flip_brush_h = true;
+	} else if (e.key === "v") {
 		flip_brush_v = true;
 	}
 });
@@ -1415,23 +1440,32 @@ document.addEventListener("keyup", (e) => {
 		return;
 	}
 
-	if (e.key == "k" || e.key == "l") {
+	if (e.key == "f" || e.key == "v") {
 		is_x_holding = false;
 		is_x_holding_set = false;
 		is_y_holding = false;
 		is_y_holding_set = false;
-	} else if (e.key === "d") {
+	} else if (e.key === "g") {
 		flip_brush_h = false;
-	} else if (e.key === "f") {
+	} else if (e.key === "b") {
 		flip_brush_v = false;
 	} else if (e.key === "h") {
 		toggleControlsVisibility();
 	} else if (e.key === "1") {
-		// something here
+		setBrushSizeAutomation(!brush_size_automation_on);
+		console.log(`brush_size_automation: ${brush_size_automation_on},
+			randomise_lock_width_and_height: ${randomise_lock_width_and_height},
+			randomise_width: ${randomise_width},
+			random_walker_width: ${random_walker_width},
+			randomise_width_range: ${randomise_width_range},
+			randomise_width_speed: ${randomise_width_speed},
+			randomise_width_easing: ${randomise_width_easing},
+			randomise_height: ${randomise_height},
+			random_walker_height: ${random_walker_height},
+			randomise_height_range: ${randomise_height_range},
+			randomise_height_speed: ${randomise_height_speed},
+			randomise_height_easing: ${randomise_height_easing}`);
 	} else if (e.key === "2") {
-		brush_size_automation_on = !brush_size_automation_on;
-		console.log(`brush_size_automation_on: ${brush_size_automation_on}`);
-	} else if (e.key === "3") {
 		follow_brush_direction = !follow_brush_direction;
 		if (!follow_brush_direction) {
 			if (rotate_on) {
@@ -1443,7 +1477,7 @@ document.addEventListener("keyup", (e) => {
 			}
 		}
 		console.log(`follow_brush_direction: ${follow_brush_direction}`);
-	} else if (e.key === "4") {
+	} else if (e.key === "3") {
 		rotate_on = !rotate_on;
 		if (rotate_on) {
 			rotate_angle = parseInt(document.getElementById("rotate_angle_input_number").value);
@@ -1452,51 +1486,139 @@ document.addEventListener("keyup", (e) => {
 			rotate_angle = 0;
 			rotate_angle_rads = 0; // rotate_angle * (Math.PI / 180);
 		}
-		console.log(`rotate_on: ${rotate_on}, rotate_angle: ${rotate_angle}`);
-	} else if (e.key === "5") {
+		console.log(`rotate: ${rotate_on},
+			rotate_angle: ${rotate_angle},
+			rotate_speed: ${rotate_speed},
+			auto_rotate: ${auto_rotate},
+			origin_x: ${origin_x},
+			origin_y: ${origin_y}`);
+	} else if (e.key === "4") {
 		mirror_on = !mirror_on;
-		console.log(`mirror_on: ${mirror_on}, reflections: ${mirror_reflections}`);
-	} else if (e.key === "6") {
+		console.log(`mirror: ${mirror_on},
+			mirror_reflections: ${mirror_reflections},
+			mirror_angle_degrees: ${mirror_angle_degrees},
+			mirror_origin_x: ${mirror_origin_x},
+			mirror_origin_y: ${mirror_origin_y}`);
+	} else if (e.key === "5") {
 		snap_on = !snap_on;
-		console.log(`snap_on: ${snap_on}`);
-	} else if (e.key === "7") {
+		console.log(`snap: ${snap_on},
+			snap_x: ${snap_x},
+			snap_y: ${snap_y}`);
+	} else if (e.key === "6") {
 		increment_on = !increment_on;
-		console.log(`increment_on: ${increment_on}, x: ${auto_inc_x_amount}, y: ${auto_inc_y_amount}`);
-	} else if (e.key === "8") {
+		console.log(`increment: ${increment_on},
+			auto_inc_x_amount: ${auto_inc_x_amount},
+			auto_inc_y_amount: ${auto_inc_y_amount},
+			increment_screen_wrap_on: ${increment_screen_wrap_on},
+			wave_on: ${wave_on},
+			x_amp: ${x_amp},
+			x_freq: ${x_freq},
+			y_amp: ${y_amp},
+			y_freq: ${y_freq}`);
+	} else if (e.key === "7") {
 		fx_on = !fx_on;
 		setFilters();
-		console.log(`fx_on: ${fx_on}, filters: ${filters}`);
-	} else if (e.key === "9") {
+		console.log(`fx_on: ${fx_on},
+			filters: ${filters},
+			hue_rotate_amount: ${hue_rotate_amount},
+			auto_hue_rotate_on: ${auto_hue_rotate_on},
+			auto_hue_increment_amount: ${auto_hue_increment_amount},
+			brightness_amount: ${brightness_amount},
+			brightness_auto_increment_on: ${brightness_auto_increment_on},
+			brightness_auto_increment_amount: ${brightness_auto_increment_amount},
+			brightness_ping_pong_on: ${brightness_ping_pong_on},
+			saturate_amount: ${saturate_amount},
+			saturate_auto_increment_on: ${saturate_auto_increment_on},
+			saturate_auto_increment_amount: ${saturate_auto_increment_amount},
+			saturate_ping_pong_on: ${saturate_ping_pong_on},
+			opacity_amount: ${opacity_amount},
+			opacity_auto_increment_on: ${opacity_auto_increment_on},
+			opacity_auto_increment_amount: ${opacity_auto_increment_amount},
+			opacity_ping_pong_on: ${opacity_ping_pong_on},
+			drop_shadow_color_rgb: ${drop_shadow_color_rgb},
+			drop_shadow_x_amount: ${drop_shadow_x_amount},
+			drop_shadow_y_amount: ${drop_shadow_y_amount},
+			drop_shadow_blur_amount: ${drop_shadow_blur_amount},
+			invert_on: ${invert_on},
+			invert_amount: ${invert_amount},
+			invert_auto_increment_on: ${invert_auto_increment_on},
+			invert_auto_increment_amount: ${invert_auto_increment_amount},
+			invert_ping_pong_on: ${invert_ping_pong_on},
+			blur_on: ${blur_on},
+			blur_amount: ${blur_amount}`);
+	} else if (e.key === "8") {
 		blend_on = !blend_on;
-		console.log(`blend_on: ${blend_on}, blend_mode: ${blend_mode}`);
+		console.log(`blend_on: ${blend_on},
+			blend_mode: ${blend_mode},
+			Available blend modes: source-atop, destination-over, destination-out, lighter, blend_xor, multiply, lighter, screen, overlay, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion, blend_hue, saturation, color, luminosity`);
 	} else if (e.key === "0") {
-		DownloadCanvasAsGif();
+		blend_on = false;
+		fx_on = false;
+		rotate_on = false;
+		rotate_angle = 0;
+		rotate_angle_rads = 0; // rotate_angle * (Math.PI / 180);
+		mirror_on = false;
+		snap_on = false;
+		increment_on = false;
+		follow_brush_direction = false;
+		setBrushSizeAutomation(false);
+		console.log(`All behaviours turned off`);
+	} else if (e.key === "a") {
+		randAll();
 	} else if (e.key === "q") {
 		blurr();
+		console.log(`blur applied,
+			canvas_blur_amount: ${window.canvas_blur_amount}`);
 	} else if (e.key === "w") {
 		invert();
+		console.log(`invert applied,
+			invert_percentage_amount: ${window.invert_percentage_amount}`);
 	} else if (e.key === "e") {
 		threshold();
+		console.log(`threshold applied,
+			threshold_level_amount: ${window.threshold_level_amount}`);
 	} else if (e.key === "r") {
 		dither();
+		console.log(`dither applied,
+			dither_pixel_size: ${window.dither_pixel_size}`);
 	} else if (e.key === "t") {
 		dilate();
+		console.log(`dilate applied`);
 	} else if (e.key === "y") {
 		erode();
+		console.log(`erode applied`);
 	} else if (e.key === "u") {
 		emboss();
+		console.log(`emboss applied,
+			emboss_pixel_size_amount: ${window.emboss_pixel_size_amount}`);
 	} else if (e.key === "i") {
 		edges();
+		console.log(`edges applied,
+			edge_pixel_size_amount: ${window.edge_pixel_size_amount}`);
 	} else if (e.key === "o") {
-		pixelate();
-	} else if (e.key === "p") {
 		glitch();
+		console.log(`glitch applied,
+			glitch_pixel_size: ${window.glitch_pixel_size},
+			canvas_glitch_amount: ${window.canvas_glitch_amount}`);
+	} else if (e.key === "p") {
+		pixelate();
+		console.log(`pixelate applied,
+			pixelate_amount: ${window.pixelate_amount}`);
 	} else if (e.key === "j") {
 		animatedGlitch();
-	} else if (e.key === "g") {
+		console.log(`animated glitch applied,
+			animation_speed: ${window.animation_speed},
+			glitch_pixel_size: ${window.glitch_pixel_size},
+			canvas_glitch_amount: ${window.canvas_glitch_amount}`);
+	} else if (e.key === "k") {
 		animatedVhs();
-	} else if (e.key === "c") {
+		console.log(`animated vhs applied,
+			animation_speed: ${window.animation_speed}`);
+	} else if (e.key === "l") {
 		animatedDither();
+		console.log(`animated dither applied,
+			animation_speed: ${window.animation_speed},
+			dither_pixel_size: ${window.dither_pixel_size}`);
 	}
 });
 

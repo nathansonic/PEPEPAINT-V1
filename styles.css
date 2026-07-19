@@ -34,11 +34,19 @@ body::-webkit-scrollbar {
 	height: 0;
 }
 
-#nav_container {
-	position: absolute;
+#card {
+	position: fixed;
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
+	width: 400px;
+	height: 560px;
+}
+
+#nav_container {
+	position: absolute;
+	top: 0;
+	left: 0;
 	width: 400px;
 	height: 560px;
 	z-index: 9999;
@@ -113,10 +121,9 @@ body::-webkit-scrollbar {
 
 .submission_dialog {
 	font-size: 0.8em;
-	position: fixed;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
+	position: absolute;
+	inset: 0 auto auto 0;
+	margin: 0;
 	width: 400px;
 	height: 560px;
 	background: #ffffff url("brushes/template01.png") center / cover no-repeat;
@@ -196,9 +203,8 @@ body::-webkit-scrollbar {
 #canvas_container {
 	font-size: 0.7em;
 	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
+	top: 0%;
+	left: 0%;
 	width: 400px;
 	height: 560px;
 	overflow: hidden;
@@ -263,16 +269,40 @@ body::-webkit-scrollbar {
 }
 
 .fx-bar {
+	font-size: 1.2em;
 	display: flex;
 	flex-flow: column nowrap;
 	padding: 0;
 	user-select: none;
 	width: 400px;
 	position: fixed;
-	top: 512px;
+	top: 80px; /* 510px */
 	left: 0px;
 	height: 44px;
 	z-index: 99999999999999;
+}
+
+.feedback-bar {
+	font-size: 1.2em;
+	display: flex;
+	flex-flow: column nowrap;
+	padding: 0;
+	user-select: none;
+	width: 400px;
+	position: fixed;
+	top: 516px; /* 510px */
+	left: 0px;
+	height: 44px;
+	z-index: 99999999999999;
+}
+
+.feedback_row {
+	width: 100%;
+	display: flex;
+	flex-flow: column wrap;
+	justify-content: flex-start;
+	align-items: flex-start;
+	padding: 0 36px;
 }
 
 .hidden {
@@ -287,6 +317,11 @@ body::-webkit-scrollbar {
 	align-content: center;
 }
 
+.menu_control_title {
+	font-size: 1.2em;
+	padding: 0 2px;
+}
+
 .info_row {
 	margin: 0 2px;
 }
@@ -294,10 +329,19 @@ body::-webkit-scrollbar {
 .palette_row {
 	width: 100%;
 	display: flex;
-	flex-flow: row wrap;
+	flex-flow: column wrap;
 	justify-content: center;
 	align-items: center;
 	padding: 0;
+}
+
+.fx_row {
+	width: 100%;
+	display: flex;
+	flex-flow: column wrap;
+	justify-content: flex-start;
+	align-items: flex-start;
+	padding: 0 36px;
 }
 
 .controls {
@@ -419,6 +463,10 @@ input.hidden_radio {
 	height: 1em;
 	z-index: 0;
 	margin: 0;
+}
+
+#nav_container input.hidden_radio {
+	pointer-events: none;
 }
 
 .color_box {

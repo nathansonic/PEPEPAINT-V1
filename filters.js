@@ -10,24 +10,22 @@ let invert_percentage_amount = 100;
 let sepia_percentage_amount = 100;
 let threshold_level_amount = 128;
 let posterize_levels_amount = 3;
-let canvas_dither_pixel_size = 2;
+let dither_pixel_size = 2;
 let solarize_threshold_amount = 128;
 let emboss_pixel_size_amount = 1;
 let edge_pixel_size_amount = 3;
 let pixelate_amount = 4;
-let canvas_glitch_pixel_size = 10;
-let canvas_glitch_amount = 5;
+let glitch_pixel_size = 10;
+let glitch_amount = 5;
 let crt_pixel_size_amount = 5;
+
 let animation_speed = 10;
 let animated_glitch_on = false;
-let animated_glitch_frame = null;
-let animated_glitch_base_canvas = null;
 let animated_vhs_on = false;
-let animated_vhs_frame = null;
-let animated_vhs_base_canvas = null;
 let animated_dither_on = false;
-let animated_dither_frame = null;
-let animated_dither_base_canvas = null;
+let animation_frame = null;
+let animation_base_canvas = null;
+let animation_last_update_time = -animation_speed;
 
 function setFilterNumber(value, fallback) {
 	const number = Number(value);
@@ -55,9 +53,9 @@ Object.defineProperties(window, {
 		get: () => posterize_levels_amount,
 		set: (value) => (posterize_levels_amount = setFilterNumber(value, posterize_levels_amount)),
 	},
-	canvas_dither_pixel_size: {
-		get: () => canvas_dither_pixel_size,
-		set: (value) => (canvas_dither_pixel_size = setFilterNumber(value, canvas_dither_pixel_size)),
+	dither_pixel_size: {
+		get: () => dither_pixel_size,
+		set: (value) => (dither_pixel_size = setFilterNumber(value, dither_pixel_size)),
 	},
 	solarize_threshold_amount: {
 		get: () => solarize_threshold_amount,
@@ -75,13 +73,13 @@ Object.defineProperties(window, {
 		get: () => pixelate_amount,
 		set: (value) => (pixelate_amount = setFilterNumber(value, pixelate_amount)),
 	},
-	canvas_glitch_pixel_size: {
-		get: () => canvas_glitch_pixel_size,
-		set: (value) => (canvas_glitch_pixel_size = setFilterNumber(value, canvas_glitch_pixel_size)),
+	glitch_pixel_size: {
+		get: () => glitch_pixel_size,
+		set: (value) => (glitch_pixel_size = setFilterNumber(value, glitch_pixel_size)),
 	},
-	canvas_glitch_amount: {
-		get: () => canvas_glitch_amount,
-		set: (value) => (canvas_glitch_amount = setFilterNumber(value, canvas_glitch_amount)),
+	glitch_amount: {
+		get: () => glitch_amount,
+		set: (value) => (glitch_amount = setFilterNumber(value, glitch_amount)),
 	},
 	crt_pixel_size_amount: {
 		get: () => crt_pixel_size_amount,
@@ -228,7 +226,7 @@ function applyDitherToCanvas(context, canvas, { seed = Math.floor(Math.random() 
 	const height = canvas.height;
 	const imageData = context.getImageData(0, 0, width, height);
 	const data = imageData.data;
-	const pixelSize = Math.max(1, canvas_dither_pixel_size | 0);
+	const pixelSize = Math.max(1, dither_pixel_size | 0);
 
 	// Seeded pseudo-random number generator.
 	const createRandom = (initialSeed) => {
@@ -395,77 +393,91 @@ function dither(options = {}) {
 	return applyDitherToCanvas(draw_ctx, draw_canvas, options, true);
 }
 
+function hasActiveAnimationFilters() {
+	return animated_glitch_on || animated_vhs_on || animated_dither_on;
+}
+
 function renderAnimationFrameToCanvas(context, canvas) {
 	context.clearRect(0, 0, canvas.width, canvas.height);
 
-	if (animated_dither_on && animated_dither_base_canvas) {
-		context.drawImage(animated_dither_base_canvas, 0, 0);
-		applyDitherToCanvas(context, canvas, { seed: Math.floor(Math.random() * 0xffffffff) }, false);
-		return true;
+	if (!hasActiveAnimationFilters() || !animation_base_canvas) {
+		return false;
 	}
 
-	if (animated_glitch_on && animated_glitch_base_canvas) {
-		context.drawImage(animated_glitch_base_canvas, 0, 0);
+	context.drawImage(animation_base_canvas, 0, 0);
+
+	// Keep one deterministic stack order for both the live canvas and GIF export.
+	if (animated_glitch_on) {
 		applyGlitchToCanvas(context, canvas, false);
-		return true;
 	}
 
-	if (animated_vhs_on && animated_vhs_base_canvas) {
-		context.drawImage(animated_vhs_base_canvas, 0, 0);
+	if (animated_vhs_on) {
 		applyVhsToCanvas(context, canvas, false);
-		return true;
 	}
 
-	return false;
+	if (animated_dither_on) {
+		applyDitherToCanvas(context, canvas, { seed: Math.floor(Math.random() * 0xffffffff) }, false);
+	}
+
+	return true;
 }
 
-function animatedDither() {
-	if (animated_dither_on) {
-		animated_dither_on = false;
-		window.pepepaint.canvas_animation_on = false;
-		cancelAnimationFrame(animated_dither_frame);
+function renderLiveAnimationFrame() {
+	renderAnimationFrameToCanvas(draw_ctx, draw_canvas);
+}
 
-		if (animated_dither_base_canvas) {
-			draw_ctx.clearRect(0, 0, draw_canvas.width, draw_canvas.height);
-			draw_ctx.drawImage(animated_dither_base_canvas, 0, 0);
-		}
-
-		animated_dither_frame = null;
-		animated_dither_base_canvas = null;
+function animationTick(timestamp) {
+	if (!hasActiveAnimationFilters()) {
+		animation_frame = null;
 		return;
 	}
 
-	if (animated_glitch_on) {
-		animatedGlitch();
-	}
-	if (animated_vhs_on) {
-		animatedVhs();
+	if (timestamp - animation_last_update_time >= animation_speed) {
+		animation_last_update_time = timestamp;
+		renderLiveAnimationFrame();
 	}
 
-	clearFilters();
+	animation_frame = requestAnimationFrame(animationTick);
+}
 
-	animated_dither_on = true;
-	window.pepepaint.canvas_animation_on = true;
-	animated_dither_base_canvas = document.createElement("canvas");
-	animated_dither_base_canvas.width = draw_canvas.width;
-	animated_dither_base_canvas.height = draw_canvas.height;
-	animated_dither_base_canvas.getContext("2d").drawImage(draw_canvas, 0, 0);
-	let last_update_time = -animation_speed;
+function toggleAnimationFilter(filter_name) {
+	const was_active = hasActiveAnimationFilters();
 
-	function tick(timestamp) {
-		if (!animated_dither_on) return;
+	if (!was_active) {
+		clearFilters();
+		animation_base_canvas = document.createElement("canvas");
+		animation_base_canvas.width = draw_canvas.width;
+		animation_base_canvas.height = draw_canvas.height;
+		animation_base_canvas.getContext("2d").drawImage(draw_canvas, 0, 0);
+	}
 
-		if (timestamp - last_update_time >= animation_speed) {
-			last_update_time = timestamp;
-			draw_ctx.clearRect(0, 0, draw_canvas.width, draw_canvas.height);
-			draw_ctx.drawImage(animated_dither_base_canvas, 0, 0);
-			applyDitherToCanvas(draw_ctx, draw_canvas, { seed: Math.floor(Math.random() * 0xffffffff) }, false);
+	if (filter_name === "glitch") animated_glitch_on = !animated_glitch_on;
+	if (filter_name === "vhs") animated_vhs_on = !animated_vhs_on;
+	if (filter_name === "dither") animated_dither_on = !animated_dither_on;
+
+	if (!hasActiveAnimationFilters()) {
+		window.pepepaint.canvas_animation_on = false;
+		if (animation_frame !== null) {
+			cancelAnimationFrame(animation_frame);
+			animation_frame = null;
 		}
-
-		animated_dither_frame = requestAnimationFrame(tick);
+		draw_ctx.clearRect(0, 0, draw_canvas.width, draw_canvas.height);
+		draw_ctx.drawImage(animation_base_canvas, 0, 0);
+		animation_base_canvas = null;
+		return;
 	}
 
-	tick();
+	window.pepepaint.canvas_animation_on = true;
+	renderLiveAnimationFrame();
+
+	if (animation_frame === null) {
+		animation_last_update_time = performance.now();
+		animation_frame = requestAnimationFrame(animationTick);
+	}
+}
+
+function animatedDither() {
+	toggleAnimationFilter("dither");
 }
 
 function ditherOld() {
@@ -475,7 +487,7 @@ function ditherOld() {
 	const height = draw_canvas.height;
 	const imageData = draw_ctx.getImageData(0, 0, width, height);
 	const data = imageData.data;
-	const pixelSize = Math.max(1, canvas_dither_pixel_size | 0);
+	const pixelSize = Math.max(1, dither_pixel_size | 0);
 
 	const getBlockAverage = (startX, startY) => {
 		const endX = Math.min(startX + pixelSize, width);
@@ -786,14 +798,14 @@ function applyGlitchToCanvas(context, canvas, save_history = true) {
 	const data = imageData.data;
 	const copyData = new Uint8ClampedArray(data); // Copy of the original data
 
-	for (let y = 0; y < height; y += canvas_glitch_pixel_size) {
-		for (let x = 0; x < width; x += canvas_glitch_pixel_size) {
+	for (let y = 0; y < height; y += glitch_pixel_size) {
+		for (let x = 0; x < width; x += glitch_pixel_size) {
 			// Choose a random shift for the whole block
-			const shiftX = Math.round((Math.random() - 0.5) * canvas_glitch_amount);
-			const shiftY = Math.round((Math.random() - 0.5) * canvas_glitch_amount);
+			const shiftX = Math.round((Math.random() - 0.5) * glitch_amount);
+			const shiftY = Math.round((Math.random() - 0.5) * glitch_amount);
 
-			for (let dy = 0; dy < canvas_glitch_pixel_size; dy++) {
-				for (let dx = 0; dx < canvas_glitch_pixel_size; dx++) {
+			for (let dy = 0; dy < glitch_pixel_size; dy++) {
+				for (let dx = 0; dx < glitch_pixel_size; dx++) {
 					const px = x + dx;
 					const py = y + dy;
 
@@ -823,52 +835,7 @@ function glitch() {
 }
 
 function animatedGlitch() {
-	if (animated_glitch_on) {
-		animated_glitch_on = false;
-		window.pepepaint.canvas_animation_on = false;
-		cancelAnimationFrame(animated_glitch_frame);
-
-		if (animated_glitch_base_canvas) {
-			draw_ctx.clearRect(0, 0, draw_canvas.width, draw_canvas.height);
-			draw_ctx.drawImage(animated_glitch_base_canvas, 0, 0);
-		}
-
-		animated_glitch_frame = null;
-		animated_glitch_base_canvas = null;
-		return;
-	}
-
-	if (animated_vhs_on) {
-		animatedVhs();
-	}
-	if (animated_dither_on) {
-		animatedDither();
-	}
-
-	clearFilters();
-
-	animated_glitch_on = true;
-	window.pepepaint.canvas_animation_on = true;
-	animated_glitch_base_canvas = document.createElement("canvas");
-	animated_glitch_base_canvas.width = draw_canvas.width;
-	animated_glitch_base_canvas.height = draw_canvas.height;
-	animated_glitch_base_canvas.getContext("2d").drawImage(draw_canvas, 0, 0);
-	let last_update_time = -animation_speed;
-
-	function tick(timestamp) {
-		if (!animated_glitch_on) return;
-
-		if (timestamp - last_update_time >= animation_speed) {
-			last_update_time = timestamp;
-			draw_ctx.clearRect(0, 0, draw_canvas.width, draw_canvas.height);
-			draw_ctx.drawImage(animated_glitch_base_canvas, 0, 0);
-			applyGlitchToCanvas(draw_ctx, draw_canvas, false);
-		}
-
-		animated_glitch_frame = requestAnimationFrame(tick);
-	}
-
-	tick();
+	toggleAnimationFilter("glitch");
 }
 
 function applyVhsToCanvas(context, canvas, save_history = true) {
@@ -930,52 +897,7 @@ function vhs() {
 }
 
 function animatedVhs() {
-	if (animated_vhs_on) {
-		animated_vhs_on = false;
-		window.pepepaint.canvas_animation_on = false;
-		cancelAnimationFrame(animated_vhs_frame);
-
-		if (animated_vhs_base_canvas) {
-			draw_ctx.clearRect(0, 0, draw_canvas.width, draw_canvas.height);
-			draw_ctx.drawImage(animated_vhs_base_canvas, 0, 0);
-		}
-
-		animated_vhs_frame = null;
-		animated_vhs_base_canvas = null;
-		return;
-	}
-
-	if (animated_glitch_on) {
-		animatedGlitch();
-	}
-	if (animated_dither_on) {
-		animatedDither();
-	}
-
-	clearFilters();
-
-	animated_vhs_on = true;
-	window.pepepaint.canvas_animation_on = true;
-	animated_vhs_base_canvas = document.createElement("canvas");
-	animated_vhs_base_canvas.width = draw_canvas.width;
-	animated_vhs_base_canvas.height = draw_canvas.height;
-	animated_vhs_base_canvas.getContext("2d").drawImage(draw_canvas, 0, 0);
-	let last_update_time = -animation_speed;
-
-	function tick(timestamp) {
-		if (!animated_vhs_on) return;
-
-		if (timestamp - last_update_time >= animation_speed) {
-			last_update_time = timestamp;
-			draw_ctx.clearRect(0, 0, draw_canvas.width, draw_canvas.height);
-			draw_ctx.drawImage(animated_vhs_base_canvas, 0, 0);
-			applyVhsToCanvas(draw_ctx, draw_canvas, false);
-		}
-
-		animated_vhs_frame = requestAnimationFrame(tick);
-	}
-
-	tick();
+	toggleAnimationFilter("vhs");
 }
 // For VHS effect
 function drawGlitchLines(ctx, width, height) {
