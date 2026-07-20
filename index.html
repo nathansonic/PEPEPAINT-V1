@@ -14,13 +14,13 @@
 				<div id="header">
 					<div class="header_item" id="header_title">PEPEPAINT</div>
 					<div class="header_item controller" id="gallery_button">
-						<a href="https://objkt.com/collections/KT1Hk63AQL4VY63dCREX6DZtv5k3GnTtUXxk" target="_blank">gallery</a>
+						<a href="https://objkt.com/users/tz1QQkaUxPXKdpkPYe4w999wF9Abggicdad5/created" target="_blank">gallery</a>
 					</div>
 					<button class="header_button controller" id="submission_button">Submit</button>
 				</div>
 
-				<div class="fx-bar">
-					<div class="fx_row">
+				<div id="info-bar">
+					<div class="info-panel">
 						<div class="info_row">h = hide controls</div>
 						<div class="info_row">1-9 = fx</div>
 						<div class="info_row">0 = rand</div>
@@ -71,16 +71,110 @@
 				</div>
 
 				<div class="palette-bar">
-					<!-- BRUSHES -->
-					<div class="palette_row">
-						<div class="paint_controls_section">
-							<div id="image_brush_controls" class="controls"></div>
+					<div class="palette_tabs" role="tablist" aria-label="Palette controls">
+						<button
+							type="button"
+							class="controller palette_tab is-active"
+							id="palette_tab_brushes"
+							role="tab"
+							aria-selected="true"
+							aria-controls="palette_panel_brushes"
+							data-palette-tab="brushes">
+							Brushes
+						</button>
+						<button
+							type="button"
+							class="controller palette_tab"
+							id="palette_tab_fx"
+							role="tab"
+							aria-selected="false"
+							aria-controls="palette_panel_fx"
+							tabindex="-1"
+							data-palette-tab="fx">
+							FX
+						</button>
+						<button
+							type="button"
+							class="controller palette_tab"
+							id="palette_tab_filters"
+							role="tab"
+							aria-selected="false"
+							aria-controls="palette_panel_filters"
+							tabindex="-1"
+							data-palette-tab="filters">
+							Filters
+						</button>
+						<button
+							type="button"
+							class="controller palette_tab"
+							id="palette_tab_animations"
+							role="tab"
+							aria-selected="false"
+							aria-controls="palette_panel_animations"
+							tabindex="-1"
+							data-palette-tab="animations">
+							Animations
+						</button>
+					</div>
+
+					<div class="palette_panels">
+						<!-- BRUSHES -->
+						<div class="palette_panel" id="palette_panel_brushes" role="tabpanel" aria-labelledby="palette_tab_brushes">
+							<div class="palette_row">
+								<div class="paint_controls_section">
+									<div id="image_brush_controls" class="controls"></div>
+								</div>
+							</div>
+						</div>
+						<div class="palette_panel" id="palette_panel_fx" role="tabpanel" aria-labelledby="palette_tab_fx" hidden>
+							<div class="fx_controls" aria-label="Brush effects">
+								<button type="button" class="controller fx_toggle" data-fx-toggle="size" aria-pressed="false">size</button>
+								<button type="button" class="controller fx_toggle" data-fx-toggle="follow" aria-pressed="false">follow</button>
+								<button type="button" class="controller fx_toggle" data-fx-toggle="rotate" aria-pressed="false">rotate</button>
+								<button type="button" class="controller fx_toggle" data-fx-toggle="mirror" aria-pressed="false">mirror</button>
+								<button type="button" class="controller fx_toggle" data-fx-toggle="snap" aria-pressed="false">snap</button>
+								<button type="button" class="controller fx_toggle" data-fx-toggle="increment" aria-pressed="false">increment</button>
+								<button type="button" class="controller fx_toggle" data-fx-toggle="fx" aria-pressed="false">fx</button>
+								<button type="button" class="controller fx_toggle" data-fx-toggle="blend" aria-pressed="false">blend</button>
+							</div>
+						</div>
+						<div class="palette_panel" id="palette_panel_filters" role="tabpanel" aria-labelledby="palette_tab_filters" hidden>
+							<div class="filter_controls" aria-label="Canvas filters">
+								<button type="button" class="controller filter_button" data-filter-action="blurr">blur</button>
+								<button type="button" class="controller filter_button" data-filter-action="invert">invert</button>
+								<button type="button" class="controller filter_button" data-filter-action="threshold">threshold</button>
+								<button type="button" class="controller filter_button" data-filter-action="dither">dither</button>
+								<button type="button" class="controller filter_button" data-filter-action="dilate">dilate</button>
+								<button type="button" class="controller filter_button" data-filter-action="erode">erode</button>
+								<button type="button" class="controller filter_button" data-filter-action="emboss">emboss</button>
+								<button type="button" class="controller filter_button" data-filter-action="edges">edges</button>
+								<button type="button" class="controller filter_button" data-filter-action="glitch">glitch</button>
+								<button type="button" class="controller filter_button" data-filter-action="pixelate">pixelate</button>
+							</div>
+						</div>
+						<div class="palette_panel" id="palette_panel_animations" role="tabpanel" aria-labelledby="palette_tab_animations" hidden>
+							<div class="filter_controls" aria-label="Canvas animations">
+								<button type="button" class="controller filter_button" data-filter-action="animatedGlitch" aria-pressed="false">
+									animated glitch
+								</button>
+								<button type="button" class="controller filter_button" data-filter-action="animatedVhs" aria-pressed="false">
+									animated vhs
+								</button>
+								<button type="button" class="controller filter_button" data-filter-action="animatedDither" aria-pressed="false">
+									animated dither
+								</button>
+								<button type="button" class="controller filter_button" data-filter-action="animatedWave" aria-pressed="false">
+									animated wave
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>
 
-				<div class="feedback-bar">
-					<div class="feedback_row">Hello: world</div>
+				<div id="feedback-bar">
+					<div class="feedback-panel">
+						<div class="feedback_row">Hello: world</div>
+					</div>
 				</div>
 			</div>
 

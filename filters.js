@@ -23,6 +23,11 @@ let animation_speed = 10;
 let animated_glitch_on = false;
 let animated_vhs_on = false;
 let animated_dither_on = false;
+let animated_wave_on = false;
+let wave_amplitude = 4;
+let wave_frequency = 6;
+let wave_vertical_offset = 0;
+const wave_vertical_speed = 2;
 let animation_frame = null;
 let animation_base_canvas = null;
 let animation_last_update_time = -animation_speed;
@@ -33,6 +38,26 @@ function setFilterNumber(value, fallback) {
 }
 
 Object.defineProperties(window, {
+	animated_glitch_on: {
+		get: () => animated_glitch_on,
+	},
+	animated_vhs_on: {
+		get: () => animated_vhs_on,
+	},
+	animated_dither_on: {
+		get: () => animated_dither_on,
+	},
+	animated_wave_on: {
+		get: () => animated_wave_on,
+	},
+	wave_amplitude: {
+		get: () => wave_amplitude,
+		set: (value) => (wave_amplitude = Math.max(0, setFilterNumber(value, wave_amplitude))),
+	},
+	wave_frequency: {
+		get: () => wave_frequency,
+		set: (value) => (wave_frequency = Math.max(0, setFilterNumber(value, wave_frequency))),
+	},
 	canvas_blur_amount: {
 		get: () => canvas_blur_amount,
 		set: (value) => (canvas_blur_amount = setFilterNumber(value, canvas_blur_amount)),
@@ -394,10 +419,41 @@ function dither(options = {}) {
 }
 
 function hasActiveAnimationFilters() {
-	return animated_glitch_on || animated_vhs_on || animated_dither_on;
+	return animated_glitch_on || animated_vhs_on || animated_dither_on || animated_wave_on;
 }
 
-function renderAnimationFrameToCanvas(context, canvas) {
+function applyWaveToCanvas(context, canvas, vertical_offset = wave_vertical_offset, advance_wave = true) {
+	const width = canvas.width;
+	const height = canvas.height;
+	const source = context.getImageData(0, 0, width, height);
+	const shifted = context.createImageData(width, height);
+	const amplitude = Math.min(width, Math.max(0, wave_amplitude));
+	const frequency = Math.max(0, wave_frequency);
+
+	for (let y = 0; y < height; y++) {
+		const wave_position = ((y - vertical_offset) / height) * Math.PI * 2 * frequency;
+		const line_shift = Math.round(Math.sin(wave_position) * amplitude);
+		const source_x = Math.max(0, -line_shift);
+		const destination_x = Math.max(0, line_shift);
+		const copy_width = width - Math.abs(line_shift);
+
+		if (copy_width <= 0) {
+			continue;
+		}
+
+		const source_start = (y * width + source_x) * 4;
+		const source_end = source_start + copy_width * 4;
+		const destination_start = (y * width + destination_x) * 4;
+		shifted.data.set(source.data.subarray(source_start, source_end), destination_start);
+	}
+
+	context.putImageData(shifted, 0, 0);
+	if (advance_wave) {
+		wave_vertical_offset += wave_vertical_speed;
+	}
+}
+
+function renderAnimationFrameToCanvas(context, canvas, options = {}) {
 	context.clearRect(0, 0, canvas.width, canvas.height);
 
 	if (!hasActiveAnimationFilters() || !animation_base_canvas) {
@@ -419,7 +475,23 @@ function renderAnimationFrameToCanvas(context, canvas) {
 		applyDitherToCanvas(context, canvas, { seed: Math.floor(Math.random() * 0xffffffff) }, false);
 	}
 
+	if (animated_wave_on) {
+		const is_gif_export_frame = Number.isFinite(options.animation_progress);
+		const wave_cycle_distance = wave_frequency > 0 ? canvas.height / wave_frequency : 0;
+		const export_offset = wave_vertical_offset + wave_cycle_distance * (options.animation_progress || 0);
+		applyWaveToCanvas(context, canvas, is_gif_export_frame ? export_offset : wave_vertical_offset, !is_gif_export_frame);
+	}
+
 	return true;
+}
+
+function getAnimationGifFrameCount() {
+	if (!animated_wave_on || wave_frequency <= 0) {
+		return 10;
+	}
+
+	const wave_cycle_distance = draw_canvas.height / wave_frequency;
+	return Math.min(120, Math.max(2, Math.round(wave_cycle_distance / wave_vertical_speed)));
 }
 
 function renderLiveAnimationFrame() {
@@ -454,6 +526,10 @@ function toggleAnimationFilter(filter_name) {
 	if (filter_name === "glitch") animated_glitch_on = !animated_glitch_on;
 	if (filter_name === "vhs") animated_vhs_on = !animated_vhs_on;
 	if (filter_name === "dither") animated_dither_on = !animated_dither_on;
+	if (filter_name === "wave") {
+		animated_wave_on = !animated_wave_on;
+		if (animated_wave_on) wave_vertical_offset = 0;
+	}
 
 	if (!hasActiveAnimationFilters()) {
 		window.pepepaint.canvas_animation_on = false;
@@ -478,6 +554,10 @@ function toggleAnimationFilter(filter_name) {
 
 function animatedDither() {
 	toggleAnimationFilter("dither");
+}
+
+function animatedWave() {
+	toggleAnimationFilter("wave");
 }
 
 function ditherOld() {
@@ -843,9 +923,9 @@ function applyVhsToCanvas(context, canvas, save_history = true) {
 		saveCanvasState();
 	}
 
-	const width = canvas.width;
-	const height = canvas.height;
-	const imageData = context.getImageData(0, 0, width, height);
+	const width = draw_canvas.width;
+	const height = draw_canvas.height;
+	const imageData = draw_ctx.getImageData(0, 0, width, height);
 	const data = imageData.data;
 
 	// Create scan lines and distortions
@@ -863,11 +943,11 @@ function applyVhsToCanvas(context, canvas, save_history = true) {
 			}
 
 			// Slightly shift color channels for chromatic aberration
-			if (x + lineOffset > 0 && x + lineOffset < width) {
-				const shiftedIndex = (y * width + Math.floor(x + lineOffset)) * 4;
-				data[index + 1] = data[shiftedIndex]; // Red channel shift
-				data[index + 2] = data[shiftedIndex + 1]; // Green channel shift
-			}
+			// if (x + lineOffset > 0 && x + lineOffset < width) {
+			//     const shiftedIndex = (y * width + Math.floor(x + lineOffset)) * 4;
+			//     data[index] = data[shiftedIndex];       // Red channel shift
+			//     data[index + 1] = data[shiftedIndex + 1]; // Green channel shift
+			// }
 
 			// Add noise
 			const noise = (Math.random() - 0.5) * 50; // Random noise
@@ -886,10 +966,10 @@ function applyVhsToCanvas(context, canvas, save_history = true) {
 	}
 
 	// Apply the modified image data back to the canvas
-	context.putImageData(imageData, 0, 0);
+	draw_ctx.putImageData(imageData, 0, 0);
 
 	// Optional: Draw additional effects like a border or glitch lines
-	drawGlitchLines(context, width, height);
+	drawGlitchLines(draw_ctx, width, height);
 }
 
 function vhs() {
@@ -916,6 +996,7 @@ function drawGlitchLines(ctx, width, height) {
 }
 
 window.pepepaint.renderAnimationFrameToCanvas = renderAnimationFrameToCanvas;
+window.pepepaint.getAnimationGifFrameCount = getAnimationGifFrameCount;
 
 // Vignette Effect (Dark edges like an old screen)
 function vignette() {
@@ -1037,6 +1118,7 @@ Object.assign(window, {
 	animatedDither,
 	animatedGlitch,
 	animatedVhs,
+	animatedWave,
 	barrel,
 	blurr,
 	crt2,

@@ -785,9 +785,13 @@ function DownloadCanvasAsGif() {
 	frameCanvas.width = draw_canvas.width;
 	frameCanvas.height = draw_canvas.height;
 	const frames = [];
+	const requested_frame_count = window.pepepaint.getAnimationGifFrameCount?.();
+	const frame_count = Number.isFinite(requested_frame_count) ? Math.max(2, Math.round(requested_frame_count)) : 10;
 
-	for (let i = 0; i < 10; i++) {
-		const hasFrame = window.pepepaint.renderAnimationFrameToCanvas(frameCtx, frameCanvas);
+	for (let i = 0; i < frame_count; i++) {
+		const hasFrame = window.pepepaint.renderAnimationFrameToCanvas(frameCtx, frameCanvas, {
+			animation_progress: i / frame_count,
+		});
 		if (!hasFrame) {
 			DownloadCanvasAsPng();
 			return;
@@ -1159,6 +1163,69 @@ let blur_amount = 4;
 // Blend
 let blend_on = false;
 let blend_mode = "difference";
+const supported_blend_modes = new Set([
+	"source-over",
+	"source-in",
+	"source-out",
+	"source-atop",
+	"destination-over",
+	"destination-in",
+	"destination-out",
+	"destination-atop",
+	"lighter",
+	"copy",
+	"xor",
+	"multiply",
+	"screen",
+	"overlay",
+	"darken",
+	"lighten",
+	"color-dodge",
+	"color-burn",
+	"hard-light",
+	"soft-light",
+	"difference",
+	"exclusion",
+	"hue",
+	"saturation",
+	"color",
+	"luminosity",
+]);
+
+function normalizeBlendMode(mode) {
+	const aliases = {
+		normal: "source-over",
+		blend_xor: "xor",
+		blend_hue: "hue",
+	};
+	const normalized_mode = String(mode).trim().toLowerCase();
+	return aliases[normalized_mode] || normalized_mode;
+}
+
+function setBrushBlendMode(mode) {
+	const next_mode = normalizeBlendMode(mode);
+	if (!supported_blend_modes.has(next_mode)) {
+		console.warn(`Unsupported blend mode: ${mode}`);
+		return false;
+	}
+
+	blend_mode = next_mode;
+	if (blend_on && typeof draw_ctx !== "undefined") {
+		draw_ctx.globalCompositeOperation = blend_mode;
+	}
+	return true;
+}
+
+function setBrushBlendEnabled(enabled) {
+	blend_on = Boolean(enabled);
+	if (typeof draw_ctx !== "undefined") {
+		setBlendMode(draw_ctx);
+	}
+	if (typeof updateFxButtonStates === "function") {
+		updateFxButtonStates();
+	}
+	return blend_on;
+}
 
 let tint_r = 255;
 let tint_g = 255;
@@ -1292,9 +1359,8 @@ function randIndividual(type_to_randomise) {
 			"destination-over",
 			"destination-out",
 			"lighter",
-			"blend_xor",
+			"xor",
 			"multiply",
-			"lighter",
 			"screen",
 			"overlay",
 			"darken",
@@ -1305,12 +1371,12 @@ function randIndividual(type_to_randomise) {
 			"soft-light",
 			"difference",
 			"exclusion",
-			"blend_hue",
+			"hue",
 			"saturation",
 			"color",
 			"luminosity",
 		];
-		blend_type = blend_options[Math.floor(Math.random() * blend_options.length)];
+		setBrushBlendMode(blend_options[Math.floor(Math.random() * blend_options.length)]);
 	}
 
 	// BRUSHES
@@ -1414,17 +1480,17 @@ document.addEventListener("keydown", (e) => {
 		stepManualRotate(-1);
 	} else if (e.key === "c") {
 		stepManualRotate(1);
-	} else if (e.key == "k") {
+	} else if (e.key == "f") {
 		is_x_holding = true;
-	} else if (e.key == "l") {
+	} else if (e.key == "v") {
 		is_y_holding = true;
 	} else if (e.key === "z" && draw_canvas) {
 		layerUndo();
 	} else if (e.key === "x" && draw_canvas) {
 		layerRedo();
-	} else if (e.key === "f") {
+	} else if (e.key === "g") {
 		flip_brush_h = true;
-	} else if (e.key === "v") {
+	} else if (e.key === "b") {
 		flip_brush_v = true;
 	}
 });
@@ -1550,7 +1616,7 @@ document.addEventListener("keyup", (e) => {
 		blend_on = !blend_on;
 		console.log(`blend_on: ${blend_on},
 			blend_mode: ${blend_mode},
-			Available blend modes: source-atop, destination-over, destination-out, lighter, blend_xor, multiply, lighter, screen, overlay, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion, blend_hue, saturation, color, luminosity`);
+			Available blend modes: source-atop, destination-over, destination-out, lighter, xor, multiply, screen, overlay, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion, hue, saturation, color, luminosity`);
 	} else if (e.key === "0") {
 		blend_on = false;
 		fx_on = false;
@@ -1901,6 +1967,128 @@ for (let i = 0; i < image_brush_array.length; i++) {
 	};
 	image_array[i].src = `brushes/${image_name}.png`;
 }
+
+const palette_tabs = Array.from(document.querySelectorAll(".palette_tab"));
+
+function activatePaletteTab(next_tab) {
+	for (const tab of palette_tabs) {
+		const is_active = tab === next_tab;
+		const panel = document.getElementById(tab.getAttribute("aria-controls"));
+
+		tab.classList.toggle("is-active", is_active);
+		tab.setAttribute("aria-selected", String(is_active));
+		tab.tabIndex = is_active ? 0 : -1;
+		panel.hidden = !is_active;
+	}
+}
+
+for (const tab of palette_tabs) {
+	tab.addEventListener("click", () => activatePaletteTab(tab));
+	tab.addEventListener("keydown", (event) => {
+		if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+			return;
+		}
+
+		event.preventDefault();
+		const direction = event.key === "ArrowRight" ? 1 : -1;
+		const next_index = (palette_tabs.indexOf(tab) + direction + palette_tabs.length) % palette_tabs.length;
+		activatePaletteTab(palette_tabs[next_index]);
+		palette_tabs[next_index].focus();
+	});
+}
+
+const fx_toggle_buttons = Array.from(document.querySelectorAll(".fx_toggle"));
+
+function getFxToggleState(effect_name) {
+	const states = {
+		size: brush_size_automation_on,
+		follow: follow_brush_direction,
+		rotate: rotate_on,
+		mirror: mirror_on,
+		snap: snap_on,
+		increment: increment_on,
+		fx: fx_on,
+		blend: blend_on,
+	};
+
+	return states[effect_name];
+}
+
+function updateFxButtonStates() {
+	for (const button of fx_toggle_buttons) {
+		button.setAttribute("aria-pressed", String(getFxToggleState(button.dataset.fxToggle)));
+	}
+}
+
+function toggleFxEffect(effect_name) {
+	if (effect_name === "size") {
+		setBrushSizeAutomation(!brush_size_automation_on);
+	} else if (effect_name === "follow") {
+		follow_brush_direction = !follow_brush_direction;
+		if (!follow_brush_direction) {
+			lastPos = null;
+			smoothedDirection = { x: 1, y: 0 };
+		}
+	} else if (effect_name === "rotate") {
+		rotate_on = !rotate_on;
+		if (!rotate_on) {
+			rotate_angle = 0;
+			rotate_angle_rads = 0;
+		}
+	} else if (effect_name === "mirror") {
+		mirror_on = !mirror_on;
+	} else if (effect_name === "snap") {
+		snap_on = !snap_on;
+	} else if (effect_name === "increment") {
+		increment_on = !increment_on;
+	} else if (effect_name === "fx") {
+		fx_on = !fx_on;
+		setFilters();
+	} else if (effect_name === "blend") {
+		setBrushBlendEnabled(!blend_on);
+	}
+
+	updateFxButtonStates();
+}
+
+for (const button of fx_toggle_buttons) {
+	button.addEventListener("click", () => toggleFxEffect(button.dataset.fxToggle));
+}
+
+const filter_buttons = Array.from(document.querySelectorAll(".filter_button"));
+const animated_filter_states = {
+	animatedGlitch: "animated_glitch_on",
+	animatedVhs: "animated_vhs_on",
+	animatedDither: "animated_dither_on",
+	animatedWave: "animated_wave_on",
+};
+
+function updateAnimatedFilterButtonStates() {
+	for (const button of filter_buttons) {
+		const state_name = animated_filter_states[button.dataset.filterAction];
+		if (state_name) {
+			button.setAttribute("aria-pressed", String(Boolean(window[state_name])));
+		}
+	}
+}
+
+for (const button of filter_buttons) {
+	button.addEventListener("click", () => {
+		const filter_action = window[button.dataset.filterAction];
+		if (typeof filter_action === "function") {
+			filter_action();
+			updateAnimatedFilterButtonStates();
+		}
+	});
+}
+
+// Keep button indicators in sync when the existing keyboard shortcuts change effects and animations.
+document.addEventListener("keyup", () => {
+	updateFxButtonStates();
+	updateAnimatedFilterButtonStates();
+});
+updateFxButtonStates();
+updateAnimatedFilterButtonStates();
 
 ////////////////////////
 //     CANVASSES      //
@@ -2473,5 +2661,21 @@ window.pepepaint = {
 	window_h,
 	clearFilters,
 	saveCanvasState,
+	setBlendMode: setBrushBlendMode,
+	setBlendEnabled: setBrushBlendEnabled,
+	getBlendMode: () => blend_mode,
+	isBlendEnabled: () => blend_on,
 };
+Object.defineProperties(window, {
+	blend_mode: {
+		configurable: true,
+		get: () => blend_mode,
+		set: (mode) => setBrushBlendMode(mode),
+	},
+	blend_on: {
+		configurable: true,
+		get: () => blend_on,
+		set: (enabled) => setBrushBlendEnabled(enabled),
+	},
+});
 window.help = help;
