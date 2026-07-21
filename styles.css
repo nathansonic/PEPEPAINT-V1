@@ -12,6 +12,7 @@
 	margin: 0;
 	padding: 0;
 	font-family: "unscii8tall", monospace;
+	text-shadow: 2px 2px 0 #ffffff;
 	font-size: 100%;
 	vertical-align: baseline;
 	outline: none;
@@ -365,26 +366,44 @@ body::-webkit-scrollbar {
 	z-index: 99999999999999;
 }
 
-#feedback-bar {
-	font-size: 1em;
+#feedback_dialog {
+	position: absolute;
+	bottom: 0px;
+	left: 50%;
+	transform: translateX(-50%) translateY(0);
+	background: rgba(255, 255, 255, 0.96);
+	opacity: 0;
+	pointer-events: none;
+	transition:
+		opacity 0.2s ease,
+		transform 0.2s ease;
+	z-index: 10000;
+}
+
+.feedback-panel {
+	width: 100%;
 	display: flex;
-	flex-flow: column nowrap;
-	padding: 0;
-	user-select: none;
-	width: 400px;
-	position: fixed;
-	top: 516px;
-	left: 0px;
-	height: 44px;
-	z-index: 99999999999999;
+	flex-flow: column wrap;
+	justify-content: center;
+	align-items: center;
 }
 
 .feedback_row {
+	padding: 4px;
 	background: rgba(243, 243, 243, 0.9);
 	display: flex;
 	flex-flow: column wrap;
-	justify-content: flex-start;
-	align-items: flex-start;
+	justify-content: center;
+	align-items: center;
+}
+
+#feedback_dialog.visible {
+	opacity: 1;
+	transform: translateX(-50%) translateY(0px);
+}
+
+#feedback_text {
+	text-align: center;
 }
 
 .hidden {
@@ -424,20 +443,6 @@ body::-webkit-scrollbar {
 	justify-content: flex-start;
 	align-items: flex-start;
 	padding: 0 36px;
-}
-
-.feedback-panel {
-	width: 100%;
-	display: flex;
-	flex-flow: column wrap;
-	justify-content: flex-start;
-	align-items: flex-start;
-	padding: 0 36px;
-}
-
-.feedback_row {
-	margin: 0 2px;
-	background: rgba(243, 243, 243, 0.9);
 }
 
 .controls {

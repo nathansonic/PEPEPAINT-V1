@@ -58,6 +58,42 @@ function getRandomFloat(min, max, decimals = 3) {
 	return Math.round(value * factor) / factor;
 }
 
+const feedback_dialog = document.getElementById("feedback_dialog");
+const feedback_text = document.getElementById("feedback_text");
+let feedback_timeout_id = null;
+
+function showFeedbackNotification(message) {
+	if (!feedback_dialog || !feedback_text) return;
+
+	feedback_text.textContent = message;
+	feedback_dialog.classList.add("visible");
+
+	if (feedback_timeout_id !== null) {
+		clearTimeout(feedback_timeout_id);
+	}
+
+	feedback_timeout_id = setTimeout(() => {
+		feedback_dialog.classList.remove("visible");
+		feedback_timeout_id = null;
+	}, 2000);
+}
+
+function showEffectToggleNotification(effectName, enabled) {
+	showFeedbackNotification(`${effectName}: ${enabled ? "On" : "Off"}`);
+}
+
+function getSavedRotateAngle() {
+	const rotateInput = document.getElementById("rotate_angle_input_number");
+	if (rotateInput && rotateInput.value !== undefined) {
+		const parsed = Number.parseInt(rotateInput.value, 10);
+		if (Number.isFinite(parsed)) {
+			return parsed;
+		}
+	}
+
+	return Number.isFinite(rotate_angle) ? rotate_angle : 0;
+}
+
 function getWeightedGradientStopCount() {
 	const stop_count_weights = [
 		{ count: 2, weight: 1 },
@@ -1519,6 +1555,7 @@ document.addEventListener("keyup", (e) => {
 		toggleControlsVisibility();
 	} else if (e.key === "1") {
 		setBrushSizeAutomation(!brush_size_automation_on);
+		showEffectToggleNotification("Size", brush_size_automation_on);
 		console.log(`brush_size_automation: ${brush_size_automation_on},
 			randomise_lock_width_and_height: ${randomise_lock_width_and_height},
 			randomise_width: ${randomise_width},
@@ -1535,23 +1572,25 @@ document.addEventListener("keyup", (e) => {
 		follow_brush_direction = !follow_brush_direction;
 		if (!follow_brush_direction) {
 			if (rotate_on) {
-				rotate_angle = parseInt(document.getElementById("rotate_angle_input_number").value);
+				rotate_angle = getSavedRotateAngle();
 				rotate_angle_rads = rotate_angle * (Math.PI / 180);
 			} else {
 				rotate_angle = 0;
 				rotate_angle_rads = 0; // rotate_angle * (Math.PI / 180);
 			}
 		}
+		showEffectToggleNotification("Follow", follow_brush_direction);
 		console.log(`follow_brush_direction: ${follow_brush_direction}`);
 	} else if (e.key === "3") {
 		rotate_on = !rotate_on;
 		if (rotate_on) {
-			rotate_angle = parseInt(document.getElementById("rotate_angle_input_number").value);
+			rotate_angle = getSavedRotateAngle();
 			rotate_angle_rads = rotate_angle * (Math.PI / 180);
 		} else {
 			rotate_angle = 0;
 			rotate_angle_rads = 0; // rotate_angle * (Math.PI / 180);
 		}
+		showEffectToggleNotification("Rotate", rotate_on);
 		console.log(`rotate: ${rotate_on},
 			rotate_angle: ${rotate_angle},
 			rotate_speed: ${rotate_speed},
@@ -1560,6 +1599,7 @@ document.addEventListener("keyup", (e) => {
 			origin_y: ${origin_y}`);
 	} else if (e.key === "4") {
 		mirror_on = !mirror_on;
+		showEffectToggleNotification("Mirror", mirror_on);
 		console.log(`mirror: ${mirror_on},
 			mirror_reflections: ${mirror_reflections},
 			mirror_angle_degrees: ${mirror_angle_degrees},
@@ -1567,11 +1607,13 @@ document.addEventListener("keyup", (e) => {
 			mirror_origin_y: ${mirror_origin_y}`);
 	} else if (e.key === "5") {
 		snap_on = !snap_on;
+		showEffectToggleNotification("Snap", snap_on);
 		console.log(`snap: ${snap_on},
 			snap_x: ${snap_x},
 			snap_y: ${snap_y}`);
 	} else if (e.key === "6") {
 		increment_on = !increment_on;
+		showEffectToggleNotification("Increment", increment_on);
 		console.log(`increment: ${increment_on},
 			auto_inc_x_amount: ${auto_inc_x_amount},
 			auto_inc_y_amount: ${auto_inc_y_amount},
@@ -1584,6 +1626,7 @@ document.addEventListener("keyup", (e) => {
 	} else if (e.key === "7") {
 		fx_on = !fx_on;
 		setFilters();
+		showEffectToggleNotification("Fx", fx_on);
 		console.log(`fx_on: ${fx_on},
 			filters: ${filters},
 			hue_rotate_amount: ${hue_rotate_amount},
@@ -1614,6 +1657,7 @@ document.addEventListener("keyup", (e) => {
 			blur_amount: ${blur_amount}`);
 	} else if (e.key === "8") {
 		blend_on = !blend_on;
+		showEffectToggleNotification("Blend", blend_on);
 		console.log(`blend_on: ${blend_on},
 			blend_mode: ${blend_mode},
 			Available blend modes: source-atop, destination-over, destination-out, lighter, xor, multiply, screen, overlay, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion, hue, saturation, color, luminosity`);
@@ -1628,63 +1672,84 @@ document.addEventListener("keyup", (e) => {
 		increment_on = false;
 		follow_brush_direction = false;
 		setBrushSizeAutomation(false);
+		showFeedbackNotification("All effects off");
 		console.log(`All behaviours turned off`);
 	} else if (e.key === "a") {
 		randAll();
 	} else if (e.key === "q") {
 		blurr();
+		showFeedbackNotification("Blur");
 		console.log(`blur applied,
 			canvas_blur_amount: ${window.canvas_blur_amount}`);
 	} else if (e.key === "w") {
 		invert();
+		showFeedbackNotification("Invert");
 		console.log(`invert applied,
 			invert_percentage_amount: ${window.invert_percentage_amount}`);
 	} else if (e.key === "e") {
 		threshold();
+		showFeedbackNotification("Threshold");
 		console.log(`threshold applied,
 			threshold_level_amount: ${window.threshold_level_amount}`);
 	} else if (e.key === "r") {
 		dither();
+		showFeedbackNotification("Dither");
 		console.log(`dither applied,
 			dither_pixel_size: ${window.dither_pixel_size}`);
 	} else if (e.key === "t") {
 		dilate();
+		showFeedbackNotification("Dilate");
 		console.log(`dilate applied`);
 	} else if (e.key === "y") {
 		erode();
+		showFeedbackNotification("Erode");
 		console.log(`erode applied`);
 	} else if (e.key === "u") {
 		emboss();
+		showFeedbackNotification("Emboss");
 		console.log(`emboss applied,
 			emboss_pixel_size_amount: ${window.emboss_pixel_size_amount}`);
 	} else if (e.key === "i") {
 		edges();
+		showFeedbackNotification("Edges");
 		console.log(`edges applied,
 			edge_pixel_size_amount: ${window.edge_pixel_size_amount}`);
 	} else if (e.key === "o") {
 		glitch();
+		showFeedbackNotification("Glitch");
 		console.log(`glitch applied,
 			glitch_pixel_size: ${window.glitch_pixel_size},
 			canvas_glitch_amount: ${window.canvas_glitch_amount}`);
 	} else if (e.key === "p") {
 		pixelate();
+		showFeedbackNotification("Pixelate");
 		console.log(`pixelate applied,
 			pixelate_amount: ${window.pixelate_amount}`);
 	} else if (e.key === "j") {
 		animatedGlitch();
+		showFeedbackNotification("Animated Glitch");
 		console.log(`animated glitch applied,
 			animation_speed: ${window.animation_speed},
 			glitch_pixel_size: ${window.glitch_pixel_size},
 			canvas_glitch_amount: ${window.canvas_glitch_amount}`);
 	} else if (e.key === "k") {
 		animatedVhs();
+		showFeedbackNotification("Animated VHS");
 		console.log(`animated vhs applied,
 			animation_speed: ${window.animation_speed}`);
 	} else if (e.key === "l") {
 		animatedDither();
+		showFeedbackNotification("Animated Dither");
 		console.log(`animated dither applied,
 			animation_speed: ${window.animation_speed},
 			dither_pixel_size: ${window.dither_pixel_size}`);
+	} else if (e.key === ";") {
+		animatedWave();
+		showFeedbackNotification("Animated Wave");
+		console.log(`animated wave applied,
+			animation_speed: ${window.animation_speed},
+			wave_amplitude: ${window.wave_amplitude},
+			wave_frequency: ${window.wave_frequency}`);
 	}
 });
 
