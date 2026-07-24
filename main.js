@@ -672,7 +672,7 @@ function createFlattenedCanvas() {
 	return offscreenCanvas;
 }
 
-function getExportFileName(prefix = "JOURNEYPAINT") {
+function getExportFileName(prefix = "PEPEPAINT") {
 	const now = new Date();
 	const iso_stamp = now.toISOString().replace(/[:.]/g, "-");
 	return `${prefix}_${iso_stamp}.png`;
@@ -804,7 +804,7 @@ function createGifBlob(frames, width, height, delayMs) {
 	return new Blob([new Uint8Array(bytes)], { type: "image/gif" });
 }
 
-function getGifExportFileName(prefix = "JOURNEYPAINT") {
+function getGifExportFileName(prefix = "PEPEPAINT") {
 	const now = new Date();
 	const iso_stamp = now.toISOString().replace(/[:.]/g, "-");
 	return `${prefix}_${iso_stamp}.gif`;
@@ -836,14 +836,14 @@ function DownloadCanvasAsGif() {
 	}
 
 	const blob = createGifBlob(frames, frameCanvas.width, frameCanvas.height, window.animation_speed);
-	downloadBlobAsImage(blob, getGifExportFileName("JOURNEYPAINT"));
+	downloadBlobAsImage(blob, getGifExportFileName("PEPEPAINT"));
 }
 
 function DownloadCanvasAsPng() {
 	const offscreenCanvas = createFlattenedCanvas();
 
 	// Generate the file name
-	const fileName = getExportFileName("JOURNEYPAINT");
+	const fileName = getExportFileName("PEPEPAINT");
 
 	// Convert offscreen canvas to Blob and download
 	offscreenCanvas.toBlob(function (blob) {
@@ -865,7 +865,7 @@ function DownloadCanvasAsImage() {
 
 async function shareCanvasImage() {
 	const offscreenCanvas = createFlattenedCanvas();
-	const fileName = getExportFileName("JOURNEYPAINT");
+	const fileName = getExportFileName("PEPEPAINT");
 
 	const blob = await new Promise((resolve, reject) => {
 		offscreenCanvas.toBlob((result) => {
@@ -909,7 +909,7 @@ function downloadSeparateCanvases() {
 	tempCtx.imageSmoothingEnabled = true;
 	tempCtx.drawImage(draw_canvas, 0, 0, window_w, window_h);
 
-	const fileName = `JOURNEYPAINT_${today}@${time_now}_LAYER_0.png`;
+	const fileName = `PEPEPAINT_${today}@${time_now}_LAYER_0.png`;
 	const downloadLink = document.createElement("a");
 	downloadLink.setAttribute("download", fileName);
 
@@ -1157,16 +1157,19 @@ function isFxAllowedForBrushType(_brush_type_name) {
 	return true;
 }
 
+let hue_rotate_on = true;
 let hue_rotate_amount = 0;
 let auto_hue_rotate_on = true;
 let auto_hue_increment_amount = 10;
 
+let brightness_on = true;
 let brightness_amount = 100;
 let brightness_auto_increment_on = true;
 let brightness_auto_increment_amount = 1.89;
 let brightness_ping_pong_on = true;
 let brightness_ping_pong_direction = 1;
 
+let saturate_on = true;
 let saturate_amount = 100;
 let saturate_auto_increment_on = true;
 let saturate_auto_increment_amount = 2.23;
@@ -1180,6 +1183,7 @@ let drop_shadow_x_amount = 30;
 let drop_shadow_y_amount = 30;
 let drop_shadow_blur_amount = 10;
 
+let opacity_on = false;
 let opacity_amount = 100;
 let opacity_auto_increment_on = false;
 let opacity_auto_increment_amount = 0.4;
@@ -1227,6 +1231,16 @@ const supported_blend_modes = new Set([
 	"color",
 	"luminosity",
 ]);
+
+// Watercolor
+let watercolor_on = false;
+let watercolor_wetness = 0.45;
+let watercolor_pigment = 0.18;
+let watercolor_granulation = 0.3;
+let watercolor_bleed = 6;
+let last_watercolor_deposit = null;
+const watercolor_melt_canvas = document.createElement("canvas");
+const watercolor_melt_ctx = watercolor_melt_canvas.getContext("2d");
 
 function normalizeBlendMode(mode) {
 	const aliases = {
@@ -1413,6 +1427,11 @@ function randIndividual(type_to_randomise) {
 			"luminosity",
 		];
 		setBrushBlendMode(blend_options[Math.floor(Math.random() * blend_options.length)]);
+	} else if (type_to_randomise == "watercolor") {
+		watercolor_wetness = getRandomFloat(0.2, 0.8);
+		watercolor_pigment = getRandomFloat(0.08, 0.35);
+		watercolor_granulation = getRandomFloat(0.1, 0.75);
+		watercolor_bleed = getRandomInt(2, 12);
 	}
 
 	// BRUSHES
@@ -1438,10 +1457,11 @@ function randAll() {
 		blend_on = Math.random() < 0.2;
 		fx_on = Math.random() < 0.2;
 		follow_brush_direction = Math.random() < 0.2;
+		watercolor_on = Math.random() < 0.2;
 	}
 
 	if (randomiser_behaviour_settings_on) {
-		const behaviour_options = ["size", "follow", "rotate", "mirror", "snap", "increment", "fx", "blend"];
+		const behaviour_options = ["size", "follow", "rotate", "mirror", "snap", "increment", "fx", "blend", "watercolor"];
 
 		behaviour_options.forEach((behaviour_option) => {
 			randIndividual(behaviour_option);
@@ -1629,22 +1649,26 @@ document.addEventListener("keyup", (e) => {
 		showEffectToggleNotification("Fx", fx_on);
 		console.log(`fx_on: ${fx_on},
 			filters: ${filters},
+			hue_rotate_on: ${hue_rotate_on},
 			hue_rotate_amount: ${hue_rotate_amount},
 			auto_hue_rotate_on: ${auto_hue_rotate_on},
 			auto_hue_increment_amount: ${auto_hue_increment_amount},
+			brightness_on: ${brightness_on},
 			brightness_amount: ${brightness_amount},
 			brightness_auto_increment_on: ${brightness_auto_increment_on},
 			brightness_auto_increment_amount: ${brightness_auto_increment_amount},
 			brightness_ping_pong_on: ${brightness_ping_pong_on},
+			saturate_on: ${saturate_on},
 			saturate_amount: ${saturate_amount},
 			saturate_auto_increment_on: ${saturate_auto_increment_on},
 			saturate_auto_increment_amount: ${saturate_auto_increment_amount},
 			saturate_ping_pong_on: ${saturate_ping_pong_on},
+			opacity_on: ${opacity_on},
 			opacity_amount: ${opacity_amount},
 			opacity_auto_increment_on: ${opacity_auto_increment_on},
 			opacity_auto_increment_amount: ${opacity_auto_increment_amount},
 			opacity_ping_pong_on: ${opacity_ping_pong_on},
-			drop_shadow_color_rgb: ${drop_shadow_color_rgb},
+			drop_shadow_color: ${drop_shadow_color},
 			drop_shadow_x_amount: ${drop_shadow_x_amount},
 			drop_shadow_y_amount: ${drop_shadow_y_amount},
 			drop_shadow_blur_amount: ${drop_shadow_blur_amount},
@@ -1661,9 +1685,20 @@ document.addEventListener("keyup", (e) => {
 		console.log(`blend_on: ${blend_on},
 			blend_mode: ${blend_mode},
 			Available blend modes: source-atop, destination-over, destination-out, lighter, xor, multiply, screen, overlay, darken, lighten, color-dodge, color-burn, hard-light, soft-light, difference, exclusion, hue, saturation, color, luminosity`);
+	} else if (e.key === "9") {
+		watercolor_on = !watercolor_on;
+		last_watercolor_deposit = null;
+		showEffectToggleNotification("Watercolor", watercolor_on);
+		console.log(`watercolor_on: ${watercolor_on},
+			watercolor_wetness: ${watercolor_wetness},
+			watercolor_pigment: ${watercolor_pigment},
+			watercolor_granulation: ${watercolor_granulation},
+			watercolor_bleed: ${watercolor_bleed}`);
 	} else if (e.key === "0") {
 		blend_on = false;
 		fx_on = false;
+		watercolor_on = false;
+		last_watercolor_deposit = null;
 		rotate_on = false;
 		rotate_angle = 0;
 		rotate_angle_rads = 0; // rotate_angle * (Math.PI / 180);
@@ -1727,25 +1762,25 @@ document.addEventListener("keyup", (e) => {
 			pixelate_amount: ${window.pixelate_amount}`);
 	} else if (e.key === "j") {
 		animatedGlitch();
-		showFeedbackNotification("Animated Glitch");
+		showEffectToggleNotification("Animated Glitch", window.animated_glitch_on);
 		console.log(`animated glitch applied,
 			animation_speed: ${window.animation_speed},
 			glitch_pixel_size: ${window.glitch_pixel_size},
 			canvas_glitch_amount: ${window.canvas_glitch_amount}`);
 	} else if (e.key === "k") {
 		animatedVhs();
-		showFeedbackNotification("Animated VHS");
+		showEffectToggleNotification("Animated VHS", window.animated_vhs_on);
 		console.log(`animated vhs applied,
 			animation_speed: ${window.animation_speed}`);
 	} else if (e.key === "l") {
 		animatedDither();
-		showFeedbackNotification("Animated Dither");
+		showEffectToggleNotification("Animated Dither", window.animated_dither_on);
 		console.log(`animated dither applied,
 			animation_speed: ${window.animation_speed},
 			dither_pixel_size: ${window.dither_pixel_size}`);
 	} else if (e.key === ";") {
 		animatedWave();
-		showFeedbackNotification("Animated Wave");
+		showEffectToggleNotification("Animated Wave", window.animated_wave_on);
 		console.log(`animated wave applied,
 			animation_speed: ${window.animation_speed},
 			wave_amplitude: ${window.wave_amplitude},
@@ -1892,22 +1927,30 @@ initRandomWalkers();
 ///////////////////////
 //    IMAGE BRUSH    //
 ///////////////////////
-function drawImageToCanvas(ctx, px, py, reflectX = false, reflectY = false, rotation = 0) {
+function drawImageStamp(ctx, px, py, reflectX = false, reflectY = false, rotation = 0, stamp_options = {}) {
 	// Bail out early if brush size is invalid
 	if (!brush_width || !brush_height) {
 		return; // Skip drawing if either dimension is 0
 	}
 
 	// Normalize negative sizes
-	const width = Math.abs(brush_width);
-	const height = Math.abs(brush_height);
+	const scale = Number.isFinite(stamp_options.scale) ? stamp_options.scale : 1;
+	const width = Math.abs(brush_width) * scale;
+	const height = Math.abs(brush_height) * scale;
 
 	ctx.save();
-	ctx.globalAlpha *= getImageBrushAlpha();
+	ctx.globalAlpha *= getImageBrushAlpha() * (Number.isFinite(stamp_options.alpha) ? stamp_options.alpha : 1);
+	if (stamp_options.composite_operation) {
+		ctx.globalCompositeOperation = stamp_options.composite_operation;
+	}
+	if (Number.isFinite(stamp_options.blur) && stamp_options.blur > 0) {
+		const active_filter = ctx.filter && ctx.filter !== "none" ? `${ctx.filter} ` : "";
+		ctx.filter = `${active_filter}blur(${stamp_options.blur}px)`;
+	}
 
 	// Translate, rotate, and scale as needed
-	ctx.translate(px, py);
-	ctx.rotate(rotation);
+	ctx.translate(px + (stamp_options.offset_x || 0), py + (stamp_options.offset_y || 0));
+	ctx.rotate(rotation + (stamp_options.rotation_offset || 0));
 	ctx.scale(
 		(reflectX ? -1 : 1) * (flip_brush_h ? -1 : 1) * (brush_width < 0 ? -1 : 1),
 		(reflectY ? -1 : 1) * (flip_brush_v ? -1 : 1) * (brush_height < 0 ? -1 : 1),
@@ -1919,10 +1962,109 @@ function drawImageToCanvas(ctx, px, py, reflectX = false, reflectY = false, rota
 	ctx.restore();
 }
 
+function softenCanvasUnderWatercolor(ctx, px, py) {
+	if (ctx !== draw_ctx || watercolor_wetness <= 0 || watercolor_bleed <= 0) {
+		return;
+	}
+
+	const brush_radius = Math.hypot(Math.abs(brush_width), Math.abs(brush_height)) / 2;
+	const padding = watercolor_bleed * 3;
+	const radius = Math.ceil(brush_radius + padding);
+	const source_x = Math.max(0, Math.floor(px - radius));
+	const source_y = Math.max(0, Math.floor(py - radius));
+	const source_right = Math.min(ctx.canvas.width, Math.ceil(px + radius));
+	const source_bottom = Math.min(ctx.canvas.height, Math.ceil(py + radius));
+	const source_width = source_right - source_x;
+	const source_height = source_bottom - source_y;
+
+	if (source_width <= 0 || source_height <= 0) {
+		return;
+	}
+
+	if (watercolor_melt_canvas.width !== source_width || watercolor_melt_canvas.height !== source_height) {
+		watercolor_melt_canvas.width = source_width;
+		watercolor_melt_canvas.height = source_height;
+	}
+
+	watercolor_melt_ctx.setTransform(1, 0, 0, 1, 0, 0);
+	watercolor_melt_ctx.globalAlpha = 1;
+	watercolor_melt_ctx.globalCompositeOperation = "source-over";
+	watercolor_melt_ctx.filter = "none";
+	watercolor_melt_ctx.clearRect(0, 0, source_width, source_height);
+	watercolor_melt_ctx.drawImage(
+		ctx.canvas,
+		source_x,
+		source_y,
+		source_width,
+		source_height,
+		0,
+		0,
+		source_width,
+		source_height,
+	);
+
+	ctx.save();
+	ctx.globalAlpha *= watercolor_wetness * 0.2;
+	ctx.globalCompositeOperation = "source-over";
+	ctx.filter = `blur(${watercolor_bleed}px)`;
+	ctx.drawImage(watercolor_melt_canvas, source_x, source_y);
+	ctx.restore();
+}
+
+function drawWatercolorToCanvas(ctx, px, py, reflectX = false, reflectY = false, rotation = 0) {
+	softenCanvasUnderWatercolor(ctx, px, py);
+
+	const granulation = clamp01(watercolor_granulation);
+	const pigment = clamp01(watercolor_pigment);
+	const wetness = clamp01(watercolor_wetness);
+	const layer_count = Math.round(3 + granulation * 4);
+	const spread = Math.max(1, Math.min(Math.abs(brush_width), Math.abs(brush_height)) * (0.025 + granulation * 0.08));
+	const layer_alpha = (pigment * 1.5) / layer_count;
+	const composite_operation = blend_on ? blend_mode : "multiply";
+
+	for (let layer = 0; layer < layer_count; layer++) {
+		const angle = Math.random() * Math.PI * 2;
+		const distance = spread * Math.sqrt(Math.random());
+		const scale_variation = 1 + (Math.random() * 2 - 1) * granulation * 0.12;
+
+		drawImageStamp(ctx, px, py, reflectX, reflectY, rotation, {
+			alpha: layer_alpha * getRandomFloat(0.65, 1.2),
+			blur: watercolor_bleed * getRandomFloat(0.12, 0.38) * wetness,
+			composite_operation,
+			offset_x: Math.cos(angle) * distance,
+			offset_y: Math.sin(angle) * distance,
+			rotation_offset: (Math.random() * 2 - 1) * granulation * 0.12,
+			scale: scale_variation,
+		});
+	}
+
+	// A lightly defined final impression suggests pigment collecting at a drying edge.
+	drawImageStamp(ctx, px, py, reflectX, reflectY, rotation, {
+		alpha: pigment * 0.32,
+		blur: Math.max(0.25, watercolor_bleed * 0.06),
+		composite_operation,
+		offset_x: (Math.random() * 2 - 1) * spread * 0.25,
+		offset_y: (Math.random() * 2 - 1) * spread * 0.25,
+		scale: 0.98 + Math.random() * 0.04,
+	});
+}
+
+function drawImageToCanvas(ctx, px, py, reflectX = false, reflectY = false, rotation = 0) {
+	if (watercolor_on) {
+		drawWatercolorToCanvas(ctx, px, py, reflectX, reflectY, rotation);
+		return;
+	}
+
+	drawImageStamp(ctx, px, py, reflectX, reflectY, rotation);
+}
+
 // Generate image controllers
 let image_brush_array = [
-	"b19",
 	"blob1",
+	"blob2",
+	"blob3",
+	"blob4",
+	"blob5",
 	"blob6",
 	"blob7",
 	"blob8",
@@ -1932,43 +2074,11 @@ let image_brush_array = [
 	"blob12",
 	"blob13",
 	"blob14",
-	"cat1",
-	"cat2",
-	"chad1",
-	"chad2",
-	"chad3",
-	"cheems",
-	"doge1",
-	"face1",
-	"face2",
-	"face3",
-	"face4",
-	"fist1",
-	"foil1",
-	"foil2",
-	"girlrunning",
-	"gondola1",
-	"gondola2",
-	"green_up",
-	"groyper1",
-	"groyper2",
-	"groyper3",
-	"grug1",
-	"grug2",
-	"hand",
-	"heart02",
-	"knuckles2",
-	"knuckles3",
-	"mememan1",
-	"mememan2",
-	"npc2",
-	"orang1",
-	"orbi1",
-	"orbi2",
-	"orbi3",
-	"orbi4",
-	"orbi5",
-	"orbi6",
+	"blob15",
+	"eye1",
+	"eye2",
+	"blob16",
+	"blob17",
 	"pepe01",
 	"pepe02",
 	"pepe03",
@@ -1981,35 +2091,77 @@ let image_brush_array = [
 	"pepe16",
 	"pepe18",
 	"pepe19",
-	"pixels39",
-	"rarestbook",
-	"red_down",
-	"sanic1",
-	"sanic2",
-	"sminem1",
-	"sonic3",
-	"spoderman1",
-	"spongebob1",
-	"sun4",
-	"swoledoge",
-	"template01",
-	"template02",
-	"template03",
-	"template04",
-	"template05",
-	"trad",
-	"tree4",
 	"turtle",
-	"ufo4",
+	"groyper1",
+	"groyper2",
+	"groyper3",
+	"orbi1",
+	"orbi2",
+	"orbi4",
+	"orbi6",
+	"orbi3",
+	"orbi5",
 	"weds1",
 	"weds2",
+	"hand",
+	"dough",
+	"pixels39",
+	"xcp",
+	"b19",
+	"gaudi",
+	"green_up",
+	"red_down",
+	"heart02",
+	"sun4",
+	"tree4",
+	"ufo4",
+	"cat1",
+	"cat2",
+	"yellingatcat",
+	"cheems",
+	"doge1",
+	"swoledoge",
+	"chad1",
+	"chad2",
+	"chad3",
+	"face1",
+	"face2",
+	"face3",
+	"face4",
+	"fist1",
+	"girlrunning",
+	"gondola1",
+	"gondola2",
+	"knuckles2",
+	"knuckles3",
+	"mememan1",
+	"mememan2",
+	"orang1",
+	"rarestbook",
+	"sanic1",
+	"sanic2",
+	"sonic3",
+	"sminem1",
+	"spoderman1",
+	"spongebob1",
 	"wifejak1",
 	"wifejakpepe",
+	"trad",
 	"wojak2",
 	"wojak3",
 	"wojak4",
 	"wojak6",
 	"wojak7",
+	"npc2",
+	"grug1",
+	"grug2",
+	"template01",
+	"template02",
+	"template03",
+	"template04",
+	"template05",
+	"foil1",
+	"foil2",
 ];
 
 for (let i = 0; i < image_brush_array.length; i++) {
@@ -2074,6 +2226,7 @@ function getFxToggleState(effect_name) {
 		increment: increment_on,
 		fx: fx_on,
 		blend: blend_on,
+		watercolor: watercolor_on,
 	};
 
 	return states[effect_name];
@@ -2111,6 +2264,9 @@ function toggleFxEffect(effect_name) {
 		setFilters();
 	} else if (effect_name === "blend") {
 		setBrushBlendEnabled(!blend_on);
+	} else if (effect_name === "watercolor") {
+		watercolor_on = !watercolor_on;
+		last_watercolor_deposit = null;
 	}
 
 	updateFxButtonStates();
@@ -2126,6 +2282,12 @@ const animated_filter_states = {
 	animatedVhs: "animated_vhs_on",
 	animatedDither: "animated_dither_on",
 	animatedWave: "animated_wave_on",
+};
+const animated_filter_names = {
+	animatedGlitch: "Animated Glitch",
+	animatedVhs: "Animated VHS",
+	animatedDither: "Animated Dither",
+	animatedWave: "Animated Wave",
 };
 
 function updateAnimatedFilterButtonStates() {
@@ -2143,6 +2305,10 @@ for (const button of filter_buttons) {
 		if (typeof filter_action === "function") {
 			filter_action();
 			updateAnimatedFilterButtonStates();
+			const state_name = animated_filter_states[button.dataset.filterAction];
+			if (state_name) {
+				showEffectToggleNotification(animated_filter_names[button.dataset.filterAction], window[state_name]);
+			}
 		}
 	});
 }
@@ -2261,27 +2427,23 @@ function setFilters() {
 	if (fx_on) {
 		clearFilters();
 
-		if (auto_hue_rotate_on) {
+		if (hue_rotate_on) {
 			filters += `hue-rotate(${hue_rotate_amount}deg)`;
 		}
 		if (blur_on) {
 			filters += `blur(${blur_amount}px)`;
 		}
-		if (brightness_auto_increment_on) {
+		if (brightness_on) {
 			filters += `brightness(${brightness_amount}%)`;
-		} else {
-			filters += `brightness(100%)`;
 		}
-		if (opacity_auto_increment_on) {
+		if (opacity_on) {
 			filters += `opacity(${parseInt(opacity_amount)}%)`;
 		}
-		if (invert_auto_increment_on) {
+		if (invert_on) {
 			filters += `invert(${invert_amount}%)`;
 		}
-		if (saturate_auto_increment_on) {
+		if (saturate_on) {
 			filters += `saturate(${saturate_amount}%)`;
-		} else {
-			filters += `saturate(100%)`;
 		}
 		if (drop_shadow_on) {
 			filters += `drop-shadow(${drop_shadow_x_amount}px ${drop_shadow_y_amount}px ${drop_shadow_blur_amount}px ${drop_shadow_color})`;
@@ -2387,6 +2549,28 @@ function doBrushing(ctx, px, py) {
 		const pr3 = rotatePoint(pr.x, pr.y, mirror_origin, (3 * Math.PI) / 2);
 		drawImageToCanvas(ctx, pr3.x, pr3.y, false, true, -rotate_angle_rads);
 	}
+}
+
+function shouldDepositWatercolor(px, py, timestamp) {
+	if (!watercolor_on) {
+		return true;
+	}
+
+	if (!last_watercolor_deposit) {
+		last_watercolor_deposit = { x: px, y: py, timestamp };
+		return true;
+	}
+
+	const distance = Math.hypot(px - last_watercolor_deposit.x, py - last_watercolor_deposit.y);
+	const movement_threshold = Math.max(2, Math.min(12, Math.min(Math.abs(brush_width), Math.abs(brush_height)) * 0.08));
+	const pooling_interval = 260 - clamp01(watercolor_wetness) * 120;
+
+	if (distance < movement_threshold && timestamp - last_watercolor_deposit.timestamp < pooling_interval) {
+		return false;
+	}
+
+	last_watercolor_deposit = { x: px, y: py, timestamp };
+	return true;
 }
 
 function mouseIsDown() {
@@ -2540,7 +2724,9 @@ function mouseIsDown() {
 				mirror_origin = getMirrorOrigin();
 			}
 
-			doBrushing(draw_ctx, px, py);
+			if (shouldDepositWatercolor(px, py, performance.now())) {
+				doBrushing(draw_ctx, px, py);
+			}
 		}
 
 		// Call this function again on the next animation frame
@@ -2572,6 +2758,7 @@ preview_canvas.addEventListener("pointerdown", (event) => {
 	active_pointer_id = event.pointerId;
 	preview_canvas.setPointerCapture(event.pointerId);
 	mousePos = getPointerPosition(preview_canvas, event);
+	last_watercolor_deposit = null;
 
 	saveCanvasState();
 
@@ -2602,6 +2789,7 @@ preview_canvas.addEventListener("pointerup", (event) => {
 	isDrawing = false; // Set drawing mode to false
 	auto_inc_x_running = 0;
 	auto_inc_y_running = 0;
+	last_watercolor_deposit = null;
 
 	clearFilters();
 	clearBlendMode(draw_ctx);
@@ -2621,6 +2809,7 @@ preview_canvas.addEventListener("pointerout", (event) => {
 		isDrawing = false;
 		auto_inc_x_running = 0;
 		auto_inc_y_running = 0;
+		last_watercolor_deposit = null;
 		lastPos = null; // Reset last position to avoid drawing a line on re-entry
 	}
 	if (is_mouse_pointer) {
@@ -2639,6 +2828,7 @@ preview_canvas.addEventListener("pointercancel", (event) => {
 	isDrawing = false;
 	auto_inc_x_running = 0;
 	auto_inc_y_running = 0;
+	last_watercolor_deposit = null;
 	lastPos = null;
 	preview_canvas.releasePointerCapture(event.pointerId);
 	active_pointer_id = null;
@@ -2731,16 +2921,558 @@ window.pepepaint = {
 	getBlendMode: () => blend_mode,
 	isBlendEnabled: () => blend_on,
 };
-Object.defineProperties(window, {
-	blend_mode: {
+
+// main.js is an ES module, so its top-level `let` values are not automatically
+// properties of window. Expose shortcut settings with live getters/setters so
+// assignments made in DevTools update the values used by the drawing loop.
+const live_fx_console_settings = new Set([
+	"hue_rotate_on",
+	"hue_rotate_amount",
+	"auto_hue_rotate_on",
+	"auto_hue_increment_amount",
+	"brightness_on",
+	"brightness_amount",
+	"brightness_auto_increment_on",
+	"brightness_auto_increment_amount",
+	"brightness_ping_pong_on",
+	"saturate_on",
+	"saturate_amount",
+	"saturate_auto_increment_on",
+	"saturate_auto_increment_amount",
+	"saturate_ping_pong_on",
+	"opacity_on",
+	"opacity_amount",
+	"opacity_auto_increment_on",
+	"opacity_auto_increment_amount",
+	"opacity_ping_pong_on",
+	"invert_on",
+	"invert_amount",
+	"invert_auto_increment_on",
+	"invert_auto_increment_amount",
+	"invert_ping_pong_on",
+	"blur_on",
+	"blur_amount",
+	"drop_shadow_on",
+	"drop_shadow_color",
+	"drop_shadow_x_amount",
+	"drop_shadow_y_amount",
+	"drop_shadow_blur_amount",
+]);
+
+function exposeConsoleSetting(name, getter, setter) {
+	Object.defineProperty(window, name, {
 		configurable: true,
-		get: () => blend_mode,
-		set: (mode) => setBrushBlendMode(mode),
+		enumerable: true,
+		get: getter,
+		set: (value) => {
+			setter(value);
+			if (fx_on && live_fx_console_settings.has(name)) {
+				setFilters();
+			}
+		},
+	});
+}
+
+const exposeBooleanSetting = (name, getter, setter) => exposeConsoleSetting(name, getter, (value) => setter(Boolean(value)));
+const exposeNumberSetting = (name, getter, setter) =>
+	exposeConsoleSetting(name, getter, (value) => {
+		const next_value = Number(value);
+		if (Number.isFinite(next_value)) {
+			setter(next_value);
+		}
+	});
+
+exposeNumberSetting(
+	"brush_size_increment_x",
+	() => brush_size_increment_x,
+	(value) => (brush_size_increment_x = value),
+);
+exposeNumberSetting(
+	"brush_size_increment_y",
+	() => brush_size_increment_y,
+	(value) => (brush_size_increment_y = value),
+);
+exposeNumberSetting(
+	"manual_inc_rotate",
+	() => manual_inc_rotate,
+	(value) => (manual_inc_rotate = value),
+);
+
+exposeBooleanSetting(
+	"randomiser_brush_type_on",
+	() => randomiser_brush_type_on,
+	(value) => (randomiser_brush_type_on = value),
+);
+exposeBooleanSetting(
+	"randomiser_brush_settings_on",
+	() => randomiser_brush_settings_on,
+	(value) => (randomiser_brush_settings_on = value),
+);
+exposeBooleanSetting(
+	"randomiser_behaviour_type_on",
+	() => randomiser_behaviour_type_on,
+	(value) => (randomiser_behaviour_type_on = value),
+);
+exposeBooleanSetting(
+	"randomiser_behaviour_settings_on",
+	() => randomiser_behaviour_settings_on,
+	(value) => (randomiser_behaviour_settings_on = value),
+);
+exposeBooleanSetting(
+	"randomiser_brush_size_on",
+	() => randomiser_brush_size_on,
+	(value) => (randomiser_brush_size_on = value),
+);
+exposeNumberSetting(
+	"randomiser_brush_size_min",
+	() => randomiser_brush_size_min,
+	(value) => (randomiser_brush_size_min = value),
+);
+exposeNumberSetting(
+	"randomiser_brush_size_max",
+	() => randomiser_brush_size_max,
+	(value) => (randomiser_brush_size_max = value),
+);
+exposeBooleanSetting(
+	"drawing_speed_on",
+	() => drawing_speed_on,
+	(value) => (drawing_speed_on = value),
+);
+exposeNumberSetting(
+	"drawing_speed",
+	() => drawing_speed,
+	(value) => (drawing_speed = value),
+);
+
+exposeBooleanSetting("brush_size_automation_on", () => brush_size_automation_on, setBrushSizeAutomation);
+exposeBooleanSetting(
+	"randomise_lock_width_and_height",
+	() => randomise_lock_width_and_height,
+	(value) => (randomise_lock_width_and_height = value),
+);
+exposeBooleanSetting(
+	"randomise_width",
+	() => randomise_width,
+	(value) => {
+		randomise_width = value;
+		initRandomWalkers();
 	},
-	blend_on: {
-		configurable: true,
-		get: () => blend_on,
-		set: (enabled) => setBrushBlendEnabled(enabled),
+);
+exposeBooleanSetting(
+	"random_walker_width",
+	() => random_walker_width,
+	(value) => {
+		random_walker_width = value;
+		initRandomWalkers();
 	},
-});
+);
+exposeNumberSetting(
+	"randomise_width_range",
+	() => randomise_width_range,
+	(value) => {
+		randomise_width_range = value;
+		initRandomWalkers();
+	},
+);
+exposeNumberSetting(
+	"randomise_width_speed",
+	() => randomise_width_speed,
+	(value) => {
+		randomise_width_speed = value;
+		initRandomWalkers();
+	},
+);
+exposeNumberSetting(
+	"randomise_width_easing",
+	() => randomise_width_easing,
+	(value) => {
+		randomise_width_easing = value;
+		initRandomWalkers();
+	},
+);
+exposeBooleanSetting(
+	"randomise_height",
+	() => randomise_height,
+	(value) => {
+		randomise_height = value;
+		initRandomWalkers();
+	},
+);
+exposeBooleanSetting(
+	"random_walker_height",
+	() => random_walker_height,
+	(value) => {
+		random_walker_height = value;
+		initRandomWalkers();
+	},
+);
+exposeNumberSetting(
+	"randomise_height_range",
+	() => randomise_height_range,
+	(value) => {
+		randomise_height_range = value;
+		initRandomWalkers();
+	},
+);
+exposeNumberSetting(
+	"randomise_height_speed",
+	() => randomise_height_speed,
+	(value) => {
+		randomise_height_speed = value;
+		initRandomWalkers();
+	},
+);
+exposeNumberSetting(
+	"randomise_height_easing",
+	() => randomise_height_easing,
+	(value) => {
+		randomise_height_easing = value;
+		initRandomWalkers();
+	},
+);
+
+exposeBooleanSetting(
+	"follow_brush_direction",
+	() => follow_brush_direction,
+	(value) => (follow_brush_direction = value),
+);
+exposeNumberSetting(
+	"smoothing_factor",
+	() => smoothing_factor,
+	(value) => (smoothing_factor = value),
+);
+
+exposeBooleanSetting(
+	"rotate_on",
+	() => rotate_on,
+	(value) => (rotate_on = value),
+);
+exposeNumberSetting(
+	"rotate_angle",
+	() => rotate_angle,
+	(value) => {
+		rotate_angle = value;
+		rotate_angle_rads = rotate_angle * (Math.PI / 180);
+	},
+);
+exposeNumberSetting(
+	"rotate_speed",
+	() => rotate_speed,
+	(value) => (rotate_speed = value),
+);
+exposeBooleanSetting(
+	"auto_rotate",
+	() => auto_rotate,
+	(value) => (auto_rotate = value),
+);
+exposeNumberSetting(
+	"origin_x",
+	() => origin_x,
+	(value) => (origin_x = value),
+);
+exposeNumberSetting(
+	"origin_y",
+	() => origin_y,
+	(value) => (origin_y = value),
+);
+
+exposeBooleanSetting(
+	"mirror_on",
+	() => mirror_on,
+	(value) => (mirror_on = value),
+);
+exposeNumberSetting(
+	"mirror_reflections",
+	() => mirror_reflections,
+	(value) => (mirror_reflections = value),
+);
+exposeNumberSetting(
+	"mirror_angle_degrees",
+	() => mirror_angle_degrees,
+	(value) => {
+		mirror_angle_degrees = value;
+		mirror_angle_rads = (mirror_angle_degrees * Math.PI) / 180;
+	},
+);
+exposeNumberSetting(
+	"mirror_origin_x",
+	() => mirror_origin_x,
+	(value) => (mirror_origin_x = value),
+);
+exposeNumberSetting(
+	"mirror_origin_y",
+	() => mirror_origin_y,
+	(value) => (mirror_origin_y = value),
+);
+
+exposeBooleanSetting(
+	"snap_on",
+	() => snap_on,
+	(value) => (snap_on = value),
+);
+exposeNumberSetting(
+	"snap_x",
+	() => snap_x,
+	(value) => (snap_x = value),
+);
+exposeNumberSetting(
+	"snap_y",
+	() => snap_y,
+	(value) => (snap_y = value),
+);
+
+exposeBooleanSetting(
+	"increment_on",
+	() => increment_on,
+	(value) => (increment_on = value),
+);
+exposeNumberSetting(
+	"auto_inc_x_amount",
+	() => auto_inc_x_amount,
+	(value) => (auto_inc_x_amount = value),
+);
+exposeNumberSetting(
+	"auto_inc_y_amount",
+	() => auto_inc_y_amount,
+	(value) => (auto_inc_y_amount = value),
+);
+exposeBooleanSetting(
+	"increment_screen_wrap_on",
+	() => increment_screen_wrap_on,
+	(value) => (increment_screen_wrap_on = value),
+);
+exposeBooleanSetting(
+	"wave_on",
+	() => wave_on,
+	(value) => (wave_on = value),
+);
+exposeNumberSetting(
+	"x_amp",
+	() => x_amp,
+	(value) => (x_amp = value),
+);
+exposeNumberSetting(
+	"x_freq",
+	() => x_freq,
+	(value) => (x_freq = value),
+);
+exposeNumberSetting(
+	"x_phase",
+	() => x_phase,
+	(value) => (x_phase = value),
+);
+exposeNumberSetting(
+	"y_amp",
+	() => y_amp,
+	(value) => (y_amp = value),
+);
+exposeNumberSetting(
+	"y_freq",
+	() => y_freq,
+	(value) => (y_freq = value),
+);
+exposeNumberSetting(
+	"y_phase",
+	() => y_phase,
+	(value) => (y_phase = value),
+);
+
+exposeBooleanSetting(
+	"fx_on",
+	() => fx_on,
+	(value) => {
+		fx_on = value;
+		setFilters();
+	},
+);
+exposeBooleanSetting(
+	"hue_rotate_on",
+	() => hue_rotate_on,
+	(value) => (hue_rotate_on = value),
+);
+exposeNumberSetting(
+	"hue_rotate_amount",
+	() => hue_rotate_amount,
+	(value) => (hue_rotate_amount = value),
+);
+exposeBooleanSetting(
+	"auto_hue_rotate_on",
+	() => auto_hue_rotate_on,
+	(value) => (auto_hue_rotate_on = value),
+);
+exposeNumberSetting(
+	"auto_hue_increment_amount",
+	() => auto_hue_increment_amount,
+	(value) => (auto_hue_increment_amount = value),
+);
+exposeBooleanSetting(
+	"brightness_on",
+	() => brightness_on,
+	(value) => (brightness_on = value),
+);
+exposeNumberSetting(
+	"brightness_amount",
+	() => brightness_amount,
+	(value) => (brightness_amount = value),
+);
+exposeBooleanSetting(
+	"brightness_auto_increment_on",
+	() => brightness_auto_increment_on,
+	(value) => (brightness_auto_increment_on = value),
+);
+exposeNumberSetting(
+	"brightness_auto_increment_amount",
+	() => brightness_auto_increment_amount,
+	(value) => (brightness_auto_increment_amount = value),
+);
+exposeBooleanSetting(
+	"brightness_ping_pong_on",
+	() => brightness_ping_pong_on,
+	(value) => (brightness_ping_pong_on = value),
+);
+exposeBooleanSetting(
+	"saturate_on",
+	() => saturate_on,
+	(value) => (saturate_on = value),
+);
+exposeNumberSetting(
+	"saturate_amount",
+	() => saturate_amount,
+	(value) => (saturate_amount = value),
+);
+exposeBooleanSetting(
+	"saturate_auto_increment_on",
+	() => saturate_auto_increment_on,
+	(value) => (saturate_auto_increment_on = value),
+);
+exposeNumberSetting(
+	"saturate_auto_increment_amount",
+	() => saturate_auto_increment_amount,
+	(value) => (saturate_auto_increment_amount = value),
+);
+exposeBooleanSetting(
+	"saturate_ping_pong_on",
+	() => saturate_ping_pong_on,
+	(value) => (saturate_ping_pong_on = value),
+);
+exposeBooleanSetting(
+	"opacity_on",
+	() => opacity_on,
+	(value) => (opacity_on = value),
+);
+exposeNumberSetting(
+	"opacity_amount",
+	() => opacity_amount,
+	(value) => (opacity_amount = value),
+);
+exposeBooleanSetting(
+	"opacity_auto_increment_on",
+	() => opacity_auto_increment_on,
+	(value) => (opacity_auto_increment_on = value),
+);
+exposeNumberSetting(
+	"opacity_auto_increment_amount",
+	() => opacity_auto_increment_amount,
+	(value) => (opacity_auto_increment_amount = value),
+);
+exposeBooleanSetting(
+	"opacity_ping_pong_on",
+	() => opacity_ping_pong_on,
+	(value) => (opacity_ping_pong_on = value),
+);
+exposeBooleanSetting(
+	"invert_on",
+	() => invert_on,
+	(value) => (invert_on = value),
+);
+exposeNumberSetting(
+	"invert_amount",
+	() => invert_amount,
+	(value) => (invert_amount = value),
+);
+exposeBooleanSetting(
+	"invert_auto_increment_on",
+	() => invert_auto_increment_on,
+	(value) => (invert_auto_increment_on = value),
+);
+exposeNumberSetting(
+	"invert_auto_increment_amount",
+	() => invert_auto_increment_amount,
+	(value) => (invert_auto_increment_amount = value),
+);
+exposeBooleanSetting(
+	"invert_ping_pong_on",
+	() => invert_ping_pong_on,
+	(value) => (invert_ping_pong_on = value),
+);
+exposeBooleanSetting(
+	"blur_on",
+	() => blur_on,
+	(value) => (blur_on = value),
+);
+exposeNumberSetting(
+	"blur_amount",
+	() => blur_amount,
+	(value) => (blur_amount = value),
+);
+exposeBooleanSetting(
+	"drop_shadow_on",
+	() => drop_shadow_on,
+	(value) => (drop_shadow_on = value),
+);
+exposeConsoleSetting(
+	"drop_shadow_color",
+	() => drop_shadow_color,
+	(value) => {
+		drop_shadow_color = String(value);
+		drop_shadow_color_rgb = hexToRgba(drop_shadow_color);
+	},
+);
+exposeNumberSetting(
+	"drop_shadow_x_amount",
+	() => drop_shadow_x_amount,
+	(value) => (drop_shadow_x_amount = value),
+);
+exposeNumberSetting(
+	"drop_shadow_y_amount",
+	() => drop_shadow_y_amount,
+	(value) => (drop_shadow_y_amount = value),
+);
+exposeNumberSetting(
+	"drop_shadow_blur_amount",
+	() => drop_shadow_blur_amount,
+	(value) => (drop_shadow_blur_amount = value),
+);
+
+exposeBooleanSetting(
+	"watercolor_on",
+	() => watercolor_on,
+	(value) => {
+		watercolor_on = value;
+		last_watercolor_deposit = null;
+	},
+);
+exposeNumberSetting(
+	"watercolor_wetness",
+	() => watercolor_wetness,
+	(value) => (watercolor_wetness = clamp01(value)),
+);
+exposeNumberSetting(
+	"watercolor_pigment",
+	() => watercolor_pigment,
+	(value) => (watercolor_pigment = clamp01(value)),
+);
+exposeNumberSetting(
+	"watercolor_granulation",
+	() => watercolor_granulation,
+	(value) => (watercolor_granulation = clamp01(value)),
+);
+exposeNumberSetting(
+	"watercolor_bleed",
+	() => watercolor_bleed,
+	(value) => (watercolor_bleed = Math.max(0, value)),
+);
+
+exposeConsoleSetting("blend_mode", () => blend_mode, setBrushBlendMode);
+exposeBooleanSetting("blend_on", () => blend_on, setBrushBlendEnabled);
 window.help = help;
