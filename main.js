@@ -1132,6 +1132,7 @@ function setBrushSizeFromHeight(size) {
 	brush_height_float = nextHeight;
 	syncBrushSizeInputs();
 }
+
 let smoothing_factor = 0.5;
 let follow_angle_rads = 0;
 
@@ -4037,4 +4038,5 @@ exposeConsoleSetting("watercolor_blendmode", () => watercolor_blendmode, setWate
 exposeConsoleSetting("blend_mode", () => blend_mode, setBrushBlendMode);
 exposeBooleanSetting("blend_on", () => blend_on, setBrushBlendEnabled);
 window.help = help;
+window.addEventListener("load", randAll, { once: true });
 window.addEventListener("load", help, { once: true });
