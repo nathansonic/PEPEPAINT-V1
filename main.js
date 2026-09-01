@@ -28,6 +28,7 @@ const submission_status = document.getElementById("submission_status");
 const submission_close_button = document.getElementById("submission_close_button");
 const submission_cancel_button = document.getElementById("submission_cancel_button");
 const submission_submit_button = document.getElementById("submission_submit_button");
+const submission_confetti = document.getElementById("submission_confetti");
 const submission_preview_canvas = document.getElementById("submission_preview_canvas");
 const submission_preview_ctx = submission_preview_canvas?.getContext("2d");
 let latest_submission_traits = null;
@@ -43,6 +44,32 @@ function setSubmissionStatus(message, warning = false) {
 	submission_status.textContent = `Status: ${message}`;
 	submission_status.classList.toggle("warning", warning);
 }
+
+function startSubmissionConfetti() {
+	if (!submission_confetti || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+	const colors = ["#008000", "#39ff14", "#ffd700", "#ff69b4", "#00bfff", "#ff4500", "#ffffff"];
+	const pieces = document.createDocumentFragment();
+
+	for (let i = 0; i < 270; i++) {
+		const piece = document.createElement("span");
+		piece.className = "submission_confetti_piece";
+		piece.style.setProperty("--confetti-left", `${Math.random() * 100}%`);
+		piece.style.setProperty("--confetti-width", `${5 + Math.random() * 6}px`);
+		piece.style.setProperty("--confetti-height", `${8 + Math.random() * 8}px`);
+		piece.style.setProperty("--confetti-color", colors[Math.floor(Math.random() * colors.length)]);
+		piece.style.setProperty("--confetti-drift", `${-60 + Math.random() * 120}px`);
+		piece.style.setProperty("--confetti-spin", `${360 + Math.random() * 720}deg`);
+		piece.style.setProperty("--confetti-duration", `${2400 + Math.random() * 1800}ms`);
+		piece.style.setProperty("--confetti-delay", `${Math.random() * 1700}ms`);
+		pieces.appendChild(piece);
+	}
+
+	submission_confetti.replaceChildren(pieces);
+	window.setTimeout(() => submission_confetti.replaceChildren(), 10000);
+}
+
+window.startSubmissionConfetti = startSubmissionConfetti;
 
 // GALLERY BUTTON
 gallery_button?.addEventListener("click", () => {
@@ -138,6 +165,7 @@ submission_form?.addEventListener("submit", async (event) => {
 		submission_form.reset();
 		console.info("PEPEPAINT submission sent", { submission_id, traits: latest_submission_traits });
 		setSubmissionStatus(`Submitted successfully · ${submission_id}`);
+		startSubmissionConfetti();
 	} catch (error) {
 		console.error("PEPEPAINT submission failed.", error);
 		setSubmissionStatus(error.message, true);
