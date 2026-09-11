@@ -1201,8 +1201,8 @@ let y_hold = 0;
 
 // Increment
 let increment_on = false;
-let auto_inc_x_amount = 2;
-let auto_inc_y_amount = 2;
+let auto_inc_x_amount = 1;
+let auto_inc_y_amount = 1;
 let auto_inc_x_running = 0;
 let auto_inc_y_running = 0;
 let increment_screen_wrap_on = true;
@@ -1440,8 +1440,8 @@ function randAll() {
 	// snap_x = getRandomInt(1, Math.max(1, Math.min(window_w, Math.round(brush_width))));
 	// snap_y = getRandomInt(1, Math.max(1, Math.min(window_h, Math.round(brush_height))));
 
-	auto_inc_x_amount = getRandomInt(-20, 20);
-	auto_inc_y_amount = getRandomInt(-20, 20);
+	// auto_inc_x_amount = getRandomInt(-20, 20);
+	// auto_inc_y_amount = getRandomInt(-20, 20);
 	auto_inc_x_running = 0;
 	auto_inc_y_running = 0;
 	x_amp = getRandomInt(0, Math.floor(window_w / 3));
