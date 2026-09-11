@@ -1390,8 +1390,8 @@ function randAll() {
 		image_index = getRandomInt(0, image_array.length - 1);
 	}
 	image_opacity = getRandomInt(20, 100);
-	brush_size_increment_x = getRandomInt(1, 8);
-	brush_size_increment_y = getRandomInt(1, 8);
+	// brush_size_increment_x = getRandomInt(1, 8);
+	// brush_size_increment_y = getRandomInt(1, 8);
 
 	const aspect_ratio = Math.max(0.01, getActiveBrushAspectRatio());
 	const max_brush_height = Math.max(1, Math.floor(Math.min(window_h, window_w / aspect_ratio)));
@@ -1440,8 +1440,8 @@ function randAll() {
 	// snap_x = getRandomInt(1, Math.max(1, Math.min(window_w, Math.round(brush_width))));
 	// snap_y = getRandomInt(1, Math.max(1, Math.min(window_h, Math.round(brush_height))));
 
-	// auto_inc_x_amount = getRandomInt(-20, 20);
-	// auto_inc_y_amount = getRandomInt(-20, 20);
+	auto_inc_x_amount = getRandomInt(-20, 20);
+	auto_inc_y_amount = getRandomInt(-20, 20);
 	auto_inc_x_running = 0;
 	auto_inc_y_running = 0;
 	x_amp = getRandomInt(0, Math.floor(window_w / 3));
