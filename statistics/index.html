@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Statistics — PEPEPAINT</title>
+	<link rel="icon" type="image/jpeg" href="/favicon/IMG_2807.JPG" />
+	<link rel="stylesheet" href="/statistics/statistics.css" />
+	<script src="/statistics/statistics.js" defer></script>
+</head>
+<body>
+	<main>
+		<nav><a href="/">← PEPEPAINT</a></nav>
+		<h1>Card statistics</h1>
+		<p>Official accepted cards. Select a column heading to sort.</p>
+		<p>Traits recorded at submission. Dates shown in UTC. Updates every 60 seconds.</p>
+		<p id="status" role="status">Loading cards…</p>
+		<div class="table-scroll" tabindex="0" role="region" aria-label="Sortable card statistics">
+			<table>
+				<caption>Official PEPEPAINT cards</caption>
+				<thead><tr id="headings"></tr></thead>
+				<tbody id="cards"></tbody>
+			</table>
+		</div>
+		<noscript>Enable JavaScript to load and sort card statistics.</noscript>
+	</main>
+</body>
+</html>

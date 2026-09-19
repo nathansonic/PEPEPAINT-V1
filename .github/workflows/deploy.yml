@@ -37,6 +37,7 @@ jobs:
           node --check main.js
           node --check filters.js
           node --check traits.js
+          node --check statistics/statistics.js
 
       - name: Install backend dependencies
         working-directory: backend
@@ -68,6 +69,7 @@ jobs:
             --include='/styles.css' \
             --include='/favicon/***' \
             --include='/greenpaper/***' \
+            --include='/statistics/***' \
             --include='/brushes/***' \
             --include='/fonts/***' \
             --exclude='*' \
@@ -105,3 +107,5 @@ jobs:
           curl --fail --silent --show-error --retry 5 --retry-delay 2 https://pepepaint.journeypaint.fun/greenpaper/ > /dev/null
           curl --fail --silent --show-error --retry 5 --retry-delay 2 https://pepepaint.journeypaint.fun/traits.js > /dev/null
           curl --fail --silent --show-error --retry 5 --retry-delay 2 https://pepepaint.journeypaint.fun/api/health > /dev/null
+          curl --fail --silent --show-error --location --retry 5 --retry-delay 2 https://pepepaint.journeypaint.fun/statistics > /dev/null
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 https://pepepaint.journeypaint.fun/api/statistics > /dev/null

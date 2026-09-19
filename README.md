@@ -171,3 +171,50 @@ The workflow deploys the backend runtime and restarts its service, but does not 
 The project source code is available under the [MIT License](LICENSE).
 
 The `fonts/` and `brushes/` directories include bundled third-party or derivative assets that may be subject to separate copyright, trademark, or font-license terms. Their inclusion in this repository does not grant rights beyond those provided by their respective owners. Contributors should verify asset rights before adding or reusing bundled assets, particularly for commercial use.
+
+## Official card statistics
+
+`/statistics` (redirecting to `/statistics/`) shows a sortable table of approved cards,
+refreshing every 60 seconds. The read-only `/api/statistics` endpoint publishes only
+those cards and their table fields. Archived artwork, descriptions and delivery
+records remain private. Drawing and saved artwork are unaffected.
+
+Edit `backend/approved-cards.json` to approve cards:
+
+```json
+[
+  {
+    "submission_id": "12345678-1234-4123-8123-123456789abc",
+    "title": "Example Card",
+    "artist": "Artist Name",
+    "objkt_id": "123"
+  }
+]
+```
+
+- Copy the exact submission ID from its delivery message or archived `submission.json`.
+  The example above is a placeholder, not a real approval.
+- `title` is a reminder for the editor; the table uses the archived title. Matching
+  uses the submission ID so duplicate titles are safe.
+- `artist` supplies the public artist name. Address, Editions and traits come from
+  the original submission. Dates are the original received time, displayed in UTC.
+- `objkt_id` supplies the token ID within collection
+  `KT18yLY7fzR5ZMKTaYQD2rNSvB6Go2VuW8gG`. Use a quoted string of digits. Omit it or
+  leave it blank for an unlinked title; otherwise titles open Objkt in a new tab.
+- Removing an entry unpublishes the card without deleting the archive. Tests and
+  other unlisted submissions never appear. The initial approval list is empty.
+- Keep valid JSON: commas between entries, no trailing commas or comments.
+  A malformed list or missing approved archive returns an unavailable response,
+  never a fallback listing of all submissions. An open page retains its last
+  loaded table on refresh failure and clearly labels it as such.
+
+Commit and deploy approval edits through the normal workflow. The deployed copy is
+`/var/www/pepepaint/backend/approved-cards.json`; the API rereads it each request.
+Direct server edits also take effect without restarting but will be overwritten
+by the next deployment, so keep the repository copy authoritative. The file is
+outside the public web directory, but its contents are visible to anyone with
+repository access; include only the public approval metadata above.
+
+The workflow includes `statistics/` in the frontend deployment and checks the page
+and API after deployment. Nginx should serve its directory index, as it does for
+`greenpaper/`. Verify `/statistics` on the actual host after deployment.

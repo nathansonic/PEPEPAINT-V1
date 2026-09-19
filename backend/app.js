@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import multer from "multer";
+import { readStatistics } from "./statistics.js";
 import {
 	SubmissionValidationError,
 	archiveSubmission,
@@ -86,6 +87,17 @@ export function createSubmissionApp(options = {}) {
 	const rate_limit = createRateLimiter({ window_ms: configuration.rate_window_ms, maximum: configuration.rate_maximum });
 
 	app.get("/api/health", (_request, response) => response.json({ status: "ok" }));
+	app.get("/api/statistics", async (_request, response) => {
+		response.set("Cache-Control", "no-store");
+		try {
+			const cards = await readStatistics(configuration.storage_root,
+				options.approval_file ?? path.join(backend_directory, "approved-cards.json"));
+			response.json(cards);
+		} catch {
+			console.error("PEPEPAINT statistics unavailable: check the approval file and archive.");
+			response.status(503).json({ error: "Statistics are temporarily unavailable." });
+		}
+	});
 	app.post("/api/submissions", rate_limit, upload.single("artwork"), async (request, response, next) => {
 		try {
 			if (delivery_partially_configured || (!email_configured && !telegram_configured)) {
@@ -154,6 +166,7 @@ export function createSubmissionApp(options = {}) {
 			app.get(`/${filename}`, (_request, response) => response.sendFile(path.join(project_directory, filename)));
 		}
 		app.get("/", (_request, response) => response.sendFile(path.join(project_directory, "index.html")));
+		app.use("/statistics", express.static(path.join(project_directory, "statistics"), { dotfiles: "deny" }));
 		app.use("/brushes", express.static(path.join(project_directory, "brushes"), { dotfiles: "deny", fallthrough: false }));
 		app.use("/fonts", express.static(path.join(project_directory, "fonts"), { dotfiles: "deny", fallthrough: false }));
 	}
