@@ -39,6 +39,9 @@ jobs:
           node --check traits.js
           node --check statistics/statistics.js
 
+      - name: Validate approved cards JSON
+        run: python3 -m json.tool backend/approved-cards.json > /dev/null
+
       - name: Install backend dependencies
         working-directory: backend
         run: npm ci
