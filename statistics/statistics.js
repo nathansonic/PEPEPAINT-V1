@@ -92,6 +92,9 @@ function render() {
 			} else if (key === "address" && typeof card.address === "string" && card.address.trim()) {
 				const link = document.createElement("a");
 				link.href = `https://objkt.com/users/${encodeURIComponent(card.address.trim())}`;
+				link.title = card.address;
+				link.setAttribute("aria-label", card.address);
+				if (display.length > 12) display = `${display.slice(0, 6)}…${display.slice(-4)}`;
 				link.target = "_blank";
 				link.rel = "noopener noreferrer";
 				link.textContent = display;
