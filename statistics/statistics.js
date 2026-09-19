@@ -1,4 +1,5 @@
 const columns = [
+	["objkt_id", "ID", "id"],
 	["received_at", "Date Submitted", "date"],
 	["title", "Title", "text"],
 	["artist", "Artist", "text"],
@@ -24,6 +25,7 @@ const number_format = new Intl.NumberFormat(undefined, { maximumFractionDigits: 
 function sortValue(value, type) {
 	if (value == null || value === "") return null;
 	if (type === "text") return String(value);
+	if (type === "id") return /^\d+$/.test(value) ? BigInt(value) : null;
 	if (type === "date") return Number.isFinite(Date.parse(value)) ? Date.parse(value) : null;
 	if (type === "duration") {
 		const match = /^(?:(\d+)d )?(\d+):(\d{2}):(\d{2})$/.exec(value);
@@ -54,7 +56,7 @@ function render() {
 		const right = sortValue(b[sort_key], type);
 		if (left == null) return right == null ? 0 : 1;
 		if (right == null) return -1;
-		return sort_direction * (type === "text" ? left.localeCompare(right) : left - right);
+		return sort_direction * (type === "text" ? left.localeCompare(right) : left < right ? -1 : left > right ? 1 : 0);
 	});
 	for (const [index, [key]] of columns.entries()) {
 		headings.children[index].setAttribute("aria-sort", key === sort_key ? (sort_direction === 1 ? "ascending" : "descending") : "none");
@@ -71,6 +73,7 @@ function render() {
 				td.className = "number";
 				if (typeof value === "number") display = number_format.format(value) + (type === "percent" ? "%" : type === "pixels" ? " px" : "");
 			}
+			if (type === "id") td.className = "number";
 			if (key === "address") td.className = "address";
 			if (key === "title" && /^https:\/\/objkt\.com\/tokens\/KT18yLY7fzR5ZMKTaYQD2rNSvB6Go2VuW8gG\/\d+$/.test(card.objkt_url)) {
 				const link = document.createElement("a");

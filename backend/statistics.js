@@ -20,6 +20,7 @@ export async function readStatistics(storage_root, approval_file) {
 		const traits = record.traits ?? {};
 		// Explicit public fields only; never expose the archive or delivery details.
 		cards.push({
+			objkt_id: objkt_id || null,
 			received_at: record.received_at,
 			title: record.title,
 			artist: entry.artist.trim(),
