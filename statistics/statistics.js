@@ -82,7 +82,14 @@ function render() {
 				link.rel = "noopener noreferrer";
 				link.textContent = display;
 				td.append(link);
-			} else if (key === "artist" && typeof card.address === "string" && card.address.trim()) {
+			} else if (key === "artist" && /^https:\/\/(?:x\.com|twitter\.com)\/[A-Za-z0-9_]+\/?$/.test(card.artist_url)) {
+				const link = document.createElement("a");
+				link.href = card.artist_url;
+				link.target = "_blank";
+				link.rel = "noopener noreferrer";
+				link.textContent = display;
+				td.append(link);
+			} else if (key === "address" && typeof card.address === "string" && card.address.trim()) {
 				const link = document.createElement("a");
 				link.href = `https://objkt.com/users/${encodeURIComponent(card.address.trim())}`;
 				link.target = "_blank";

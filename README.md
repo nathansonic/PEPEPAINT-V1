@@ -196,6 +196,9 @@ Edit `backend/approved-cards.json` to approve cards:
   The example above is a placeholder, not a real approval.
 - `title` is a reminder for the editor; the table uses the archived title. Matching
   uses the submission ID so duplicate titles are safe.
+- `x` supplies the artist’s full X profile URL (for example `https://x.com/example`).
+  `twitter` is also accepted. Artist names link to this profile; addresses link to
+  their Objkt accounts. Missing or invalid social URLs leave the artist name unlinked.
 - `artist` supplies the public artist name. Address, Editions and traits come from
   the original submission. Dates are the original received time, displayed in UTC.
 - `objkt_id` supplies the token ID within collection

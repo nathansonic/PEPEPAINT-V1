@@ -24,14 +24,15 @@ test("statistics publishes only approved public fields and rereads approval edit
 	t.after(async () => { await new Promise(resolve => server.close(resolve)); await rm(root, { recursive: true, force: true }); });
 	const url = `http://127.0.0.1:${server.address().port}`;
 	assert.deepEqual(await (await fetch(`${url}/api/statistics`)).json(), []);
-	const entry = { submission_id: id, title: "Reference title", artist: "Artist", objkt_id: "0" };
+	const entry = { submission_id: id, title: "Reference title", artist: "Artist", x: "https://x.com/example", objkt_id: "0" };
 	await writeFile(approval_file, JSON.stringify([entry, entry]));
 	const response = await fetch(`${url}/api/statistics`);
 	assert.equal(response.headers.get("cache-control"), "no-store");
-	assert.deepEqual(await response.json(), [{ objkt_id: "0", received_at: "2026-09-19T10:00:00.000Z", title: "Original title", artist: "Artist", address: "tz1example", editions: 10, croakage: 10, rsi: 20, brushiness: 2, quietus: 0.000000001, quietus_elapsed: "1d 00:00:00", wanderlust: 200, cows: 30, objkt_url: "https://objkt.com/tokens/KT18yLY7fzR5ZMKTaYQD2rNSvB6Go2VuW8gG/0" }]);
-	await writeFile(approval_file, JSON.stringify([{ ...entry, artist: "Updated", objkt_id: "" }]));
+	assert.deepEqual(await response.json(), [{ objkt_id: "0", received_at: "2026-09-19T10:00:00.000Z", title: "Original title", artist: "Artist", artist_url: "https://x.com/example", address: "tz1example", editions: 10, croakage: 10, rsi: 20, brushiness: 2, quietus: 0.000000001, quietus_elapsed: "1d 00:00:00", wanderlust: 200, cows: 30, objkt_url: "https://objkt.com/tokens/KT18yLY7fzR5ZMKTaYQD2rNSvB6Go2VuW8gG/0" }]);
+	await writeFile(approval_file, JSON.stringify([{ ...entry, artist: "Updated", x: undefined, twitter: "https://x.com/updated", objkt_id: "" }]));
 	const updated = await (await fetch(`${url}/api/statistics`)).json();
 	assert.equal(updated[0].artist, "Updated");
+	assert.equal(updated[0].artist_url, "https://x.com/updated");
 	assert.equal(updated[0].objkt_url, null);
 	assert.equal(updated[0].objkt_id, null);
 	await writeFile(approval_file, "[]");

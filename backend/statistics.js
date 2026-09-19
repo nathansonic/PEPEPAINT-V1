@@ -18,12 +18,14 @@ export async function readStatistics(storage_root, approval_file) {
 		const record = await readArchivedSubmission(storage_root, entry.submission_id);
 		if (!record) throw new Error("An approved submission is missing from the archive.");
 		const traits = record.traits ?? {};
+		const artist_url = entry.x ?? entry.twitter ?? "";
 		// Explicit public fields only; never expose the archive or delivery details.
 		cards.push({
 			objkt_id: objkt_id || null,
 			received_at: record.received_at,
 			title: record.title,
 			artist: entry.artist.trim(),
+			artist_url: /^https:\/\/(?:x\.com|twitter\.com)\/[A-Za-z0-9_]+\/?$/.test(artist_url) ? artist_url : null,
 			address: record.wallet_address,
 			editions: record.editions,
 			croakage: traits.croakage ?? traits.pepeness ?? null,
