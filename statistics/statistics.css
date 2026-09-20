@@ -16,35 +16,38 @@ body {
 	margin: 0;
 }
 main {
-	padding: 32px 24px;
+	padding: 16px;
+	font-size: 14px;
 }
 a {
 	color: inherit;
 }
 h1 {
-	font-size: 32px;
-	margin-bottom: 12px;
+	font-size: 24px;
+	margin: 12px 0 8px;
 }
 p {
-	line-height: 1.5;
+	line-height: 1.35;
+	margin: 6px 0;
 }
 .table-scroll {
+	margin-top: 10px;
 	overflow-x: auto;
 	border: 1px solid green;
 }
 table {
 	border-collapse: collapse;
 	width: 100%;
-	font-size: 16px;
+	font-size: 14px;
 }
 caption {
 	text-align: left;
-	padding: 12px;
+	padding: 6px 8px;
 	font-weight: bold;
 }
 th,
 td {
-	padding: 12px;
+	padding: 6px 8px;
 	text-align: left;
 	border-bottom: 1px solid #cee1ce;
 	white-space: nowrap;
@@ -57,7 +60,7 @@ th button {
 	color: inherit;
 	background: transparent;
 	border: 0;
-	padding: 4px 0;
+	padding: 3px 0;
 	cursor: pointer;
 	white-space: nowrap;
 }
@@ -85,9 +88,9 @@ td.number {
 }
 @media (max-width: 600px) {
 	main {
-		padding: 20px 12px;
+		padding: 12px 8px;
 	}
 	h1 {
-		font-size: 26px;
+		font-size: 22px;
 	}
 }
