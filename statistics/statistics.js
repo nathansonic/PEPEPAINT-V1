@@ -10,7 +10,7 @@ const columns = [
 	["brushiness", "Brushiness", "number"],
 	["quietus", "Quietus", "percent"],
 	["wanderlust", "Wanderlust", "pixels"],
-	["cows", "Cows", "number"],
+	["cows", "Cows", "percent"],
 ];
 const status_element = document.getElementById("status");
 const headings = document.getElementById("headings");
