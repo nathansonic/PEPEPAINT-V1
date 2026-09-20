@@ -9,7 +9,6 @@ const columns = [
 	["rsi", "RSi", "number"],
 	["brushiness", "Brushiness", "number"],
 	["quietus", "Quietus", "percent"],
-	["quietus_elapsed", "Quietus Time Elapsed", "duration"],
 	["wanderlust", "Wanderlust", "pixels"],
 	["cows", "Cows", "number"],
 ];
@@ -67,6 +66,7 @@ function render() {
 		for (const [key, , type] of columns) {
 			const td = document.createElement("td");
 			const value = card[key];
+			if (key === "quietus" && card.quietus_elapsed) td.title = `Time elapsed: ${card.quietus_elapsed}`;
 			let display = value == null || value === "" ? "—" : String(value);
 			if (type === "date" && sortValue(value, type) != null) display = new Date(value).toISOString().replace("T", " ").slice(0, 19);
 			if (["number", "percent", "pixels"].includes(type)) {
