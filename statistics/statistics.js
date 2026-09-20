@@ -71,9 +71,9 @@ function render() {
 			if (type === "date" && sortValue(value, type) != null) display = new Date(value).toISOString().replace("T", " ").slice(0, 19);
 			if (["number", "percent", "pixels"].includes(type)) {
 				td.className = "number";
-				if (typeof value === "number") display = number_format.format(value) + (type === "percent" ? "%" : type === "pixels" ? " px" : "");
+				if (typeof value === "number") display = number_format.format(value) + (type === "percent" ? " %" : type === "pixels" ? " px" : "");
 			}
-			if (type === "id") td.className = "number";
+			if (type === "id" || type === "duration") td.className = "number";
 			if (key === "address") td.className = "address";
 			if (key === "title" && /^https:\/\/objkt\.com\/tokens\/KT18yLY7fzR5ZMKTaYQD2rNSvB6Go2VuW8gG\/\d+$/.test(card.objkt_url)) {
 				const link = document.createElement("a");
