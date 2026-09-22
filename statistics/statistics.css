@@ -86,6 +86,11 @@ td.number {
 	text-align: right;
 	font-variant-numeric: tabular-nums;
 }
+/* Editions through Cows occupy columns 6–12. */
+th:nth-child(n + 6),
+td:nth-child(n + 6) {
+	text-align: center;
+}
 @media (max-width: 600px) {
 	main {
 		padding: 12px 8px;
