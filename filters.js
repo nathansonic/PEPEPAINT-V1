@@ -121,17 +121,8 @@ Object.defineProperties(window, {
 	},
 });
 
-const {
-	draw_canvas,
-	draw_ctx,
-	window_w,
-	window_h,
-	clearFilters,
-	invalidatePendingSubmission,
-	isCanvasReady,
-	queuePersistentCanvasSave,
-	saveCanvasState,
-} = window.pepepaint;
+const { draw_canvas, draw_ctx, window_w, window_h, clearFilters, invalidatePendingSubmission, isCanvasReady, queuePersistentCanvasSave, saveCanvasState } =
+	window.pepepaint;
 
 function blurr() {
 	clearFilters();

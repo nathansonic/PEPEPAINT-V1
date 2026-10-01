@@ -55,10 +55,23 @@ function render() {
 		const right = sortValue(b[sort_key], type);
 		if (left == null) return right == null ? 0 : 1;
 		if (right == null) return -1;
-		return sort_direction * (type === "text" ? left.localeCompare(right) : left < right ? -1 : left > right ? 1 : 0);
+		return (
+			sort_direction *
+			(type === "text" ? left.localeCompare(right)
+			: left < right ? -1
+			: left > right ? 1
+			: 0)
+		);
 	});
 	for (const [index, [key]] of columns.entries()) {
-		headings.children[index].setAttribute("aria-sort", key === sort_key ? (sort_direction === 1 ? "ascending" : "descending") : "none");
+		headings.children[index].setAttribute(
+			"aria-sort",
+			key === sort_key ?
+				sort_direction === 1 ?
+					"ascending"
+				:	"descending"
+			:	"none",
+		);
 	}
 	const rows = document.createDocumentFragment();
 	for (const card of sorted) {
@@ -71,7 +84,12 @@ function render() {
 			if (type === "date" && sortValue(value, type) != null) display = new Date(value).toISOString().replace("T", " ").slice(0, 19);
 			if (["number", "percent", "pixels"].includes(type)) {
 				td.className = "number";
-				if (typeof value === "number") display = number_format.format(value) + (type === "percent" ? " %" : type === "pixels" ? " px" : "");
+				if (typeof value === "number")
+					display =
+						number_format.format(value) +
+						(type === "percent" ? " %"
+						: type === "pixels" ? " px"
+						: "");
 			}
 			if (type === "id" || type === "duration") td.className = "number";
 			if (key === "address") td.className = "address";
@@ -116,9 +134,15 @@ async function refresh() {
 		cards = result;
 		loaded = true;
 		render();
-		status_element.textContent = cards.length ? `${cards.length} official ${cards.length === 1 ? "card" : "cards"}. Last updated ${new Date().toLocaleTimeString()}.` : "No official cards have been published yet.";
+		status_element.textContent =
+			cards.length ?
+				`${cards.length} official ${cards.length === 1 ? "card" : "cards"}. Last updated ${new Date().toLocaleTimeString()}.`
+			:	"No official cards have been published yet.";
 	} catch {
-		status_element.textContent = loaded ? "Could not refresh. Showing the last loaded cards; retrying in 60 seconds." : "Statistics are temporarily unavailable. Retrying in 60 seconds.";
+		status_element.textContent =
+			loaded ?
+				"Could not refresh. Showing the last loaded cards; retrying in 60 seconds."
+			:	"Statistics are temporarily unavailable. Retrying in 60 seconds.";
 	} finally {
 		setTimeout(refresh, 60000);
 	}
