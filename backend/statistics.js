@@ -26,7 +26,7 @@ export async function readStatistics(storage_root, approval_file) {
 			title: entry.overrides?.title ?? record.title,
 			artist: entry.artist.trim(),
 			artist_url: /^https:\/\/(?:x\.com|twitter\.com)\/[A-Za-z0-9_]+\/?$/.test(artist_url) ? artist_url : null,
-			address: record.wallet_address,
+			address: entry.overrides?.address ?? record.wallet_address,
 			editions: entry.overrides?.editions ?? record.editions,
 			croakage: traits.croakage ?? traits.pepeness ?? null,
 			rsi: traits.rsi ?? traits.number_of_strokes ?? null,

@@ -35,12 +35,13 @@ test("statistics publishes only approved public fields and rereads approval edit
 	assert.equal(updated[0].artist_url, "https://x.com/updated");
 	assert.equal(updated[0].objkt_url, null);
 	assert.equal(updated[0].objkt_id, null);
-	await writeFile(approval_file, JSON.stringify([{ ...entry, overrides: { title: "It's all Dough", editions: 19, brushiness: 1, description: "PRIVATE" } }]));
+	await writeFile(approval_file, JSON.stringify([{ ...entry, overrides: { title: "It's all Dough", address: "tz1VEE6Ga5C5Jfq3o9h2qik1VsMAnsgfz7JV", editions: 19, brushiness: 1, description: "PRIVATE" } }]));
 	const overridden = await (await fetch(`${url}/api/statistics`)).json();
-	assert.deepEqual(overridden, [{ ...updated[0], title: "It's all Dough", editions: 19, brushiness: 1, artist: "Artist", artist_url: "https://x.com/example", objkt_id: "0", objkt_url: "https://objkt.com/tokens/KT18yLY7fzR5ZMKTaYQD2rNSvB6Go2VuW8gG/0" }]);
+	assert.deepEqual(overridden, [{ ...updated[0], title: "It's all Dough", address: "tz1VEE6Ga5C5Jfq3o9h2qik1VsMAnsgfz7JV", editions: 19, brushiness: 1, artist: "Artist", artist_url: "https://x.com/example", objkt_id: "0", objkt_url: "https://objkt.com/tokens/KT18yLY7fzR5ZMKTaYQD2rNSvB6Go2VuW8gG/0" }]);
 	await writeFile(approval_file, JSON.stringify([entry]));
 	const restored = await (await fetch(`${url}/api/statistics`)).json();
 	assert.equal(restored[0].title, "Original title");
+	assert.equal(restored[0].address, "tz1example");
 	assert.equal(restored[0].editions, 10);
 	assert.equal(restored[0].brushiness, 2);
 	await writeFile(approval_file, "[]");

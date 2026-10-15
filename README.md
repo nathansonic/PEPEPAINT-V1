@@ -201,7 +201,7 @@ Edit `backend/approved-cards.json` to approve cards:
   their Objkt accounts. Missing or invalid social URLs leave the artist name unlinked.
 - `artist` supplies the public artist name. Address, Editions and traits come from
   the original submission. Dates are the original received time, displayed in UTC.
-- Optional `overrides` supplies minted corrections for `title`, `editions` and
+- Optional `overrides` supplies minted corrections for `title`, `address`, `editions` and
   `brushiness`, for example `"overrides": { "title": "It's all Dough", "editions": 19, "brushiness": 1 }`.
   Omitted fields use the original submission; the archived submission is unchanged.
 - `objkt_id` supplies the token ID within collection
