@@ -270,7 +270,12 @@
 		"title": "It's all Dough",
 		"artist": "Gypsie Lou",
 		"x": "https://x.com/gypsielou",
-		"objkt_id": "40"
+		"objkt_id": "40",
+		"overrides": {
+			"title": "It's all Dough",
+			"editions": 19,
+			"brushiness": 1
+		}
 	},
 	{
 		"submission_id": "354a6576-28f0-490e-8582-01c54a97499d",
